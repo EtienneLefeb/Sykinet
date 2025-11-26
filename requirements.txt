@@ -6,3 +6,4 @@ gcsfs
 st-files-connection
 shapely
 pydeck 
+matplotlib
