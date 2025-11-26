@@ -21,11 +21,12 @@ df['geometry'] = df['geometry'].apply(wkt.loads)
 gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
 # Afficher la carte simple avec couleur par gridcode
+width = st.sidebar.slider("plot width", 1, 25, 3)
+height = st.sidebar.slider("plot height", 1, 25, 1)
 
-fig, ax = plt.subplots(figsize=(6, 6))
-ax.set_aspect(1)
+fig, ax = plt.subplots(figsize=(width, height))
 ax.set_axis_off()  # retire les axes pour une carte plus propre
 
 gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
 
-st.pyplot(fig)
+st.pyplot(fig)  
