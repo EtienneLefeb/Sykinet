@@ -15,7 +15,7 @@ df = conn.read("streamlit-sykinet/base sykinet/base_innondation.csv",
                ttl=600)
 
 # Convertir la colonne WKT en géométrie
-df['geometry'] = df['geom'].apply(wkt.loads)
+df['geometry'] = df['geometry'].apply(wkt.loads)
 gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
 # Afficher sur la carte
