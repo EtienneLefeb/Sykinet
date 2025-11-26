@@ -41,7 +41,7 @@ ax.set_aspect('equal', adjustable='box')
 ax.set_axis_off() 
 
 # Tracé de la carte
-gdf_projete.plot(column='gridcode', cmap='viridis', legend=False, ax=ax)
+gdf.plot(column='gridcode', cmap='viridis', legend=False, ax=ax)
 
 # Pour s'assurer que les sliders Streamlit impactent l'affichage final,
 # nous pouvons les utiliser pour **ajuster la taille d'affichage** de la figure
