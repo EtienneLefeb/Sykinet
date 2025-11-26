@@ -5,6 +5,7 @@ import geopandas as gpd
 from shapely import wkt
 import folium
 from streamlit_folium import st_folium
+import pydeck as pdk
 
 st.title("Carte du Finistère")
 
@@ -14,37 +15,34 @@ conn = st.connection("gcs", type=FilesConnection)
 # Lire le CSV depuis le bucket GCS
 df = conn.read("streamlit-sykinet/base sykinet/base_innondation.csv",
                input_format="csv",
-               ttl=600)
+               ttl=600) 
 
 # Convertir la colonne WKT en géométrie
 df['geometry'] = df['geometry'].apply(wkt.loads)
-
-# Créer GeoDataFrame
 gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
-# Créer la carte centrée sur le Finistère
-m = folium.Map(location=[48.0, -4.0], zoom_start=9)
+# Extraire latitude et longitude
+gdf['lon'] = gdf.geometry.x
+gdf['lat'] = gdf.geometry.y
 
-# Couleurs fixes pour gridcode
-color_dict = {
-    0: '#1f77b4',  # bleu
-    1: '#ff7f0e',  # orange
-    2: '#2ca02c',  # vert
-}
+# Couleurs par gridcode
+color_map = {0: [0,0,255], 1: [0,255,0], 2: [255,0,0]}  # bleu, vert, rouge
+gdf['color'] = gdf['gridcode'].map(color_map)
 
-# Ajouter les polygones avec couleur selon gridcode
-for _, row in gdf.iterrows():
-    sim_geo = gpd.GeoSeries([row['geometry']]).__geo_interface__
-    folium.GeoJson(
-        sim_geo,
-        style_function=lambda x, grid=row['gridcode']: {
-            'fillColor': color_dict.get(grid, '#gray'),
-            'color': 'black',
-            'weight': 1,
-            'fillOpacity': 0.6
-        },
-        tooltip=folium.Tooltip(f"gridcode: {row['gridcode']}<br>Classe: {row['CLASSE']}")
-    ).add_to(m)
+# Pydeck chart
+layer = pdk.Layer(
+    "ScatterplotLayer",
+    data=gdf,
+    get_position='[lon, lat]',
+    get_fill_color='color',
+    get_radius=50,
+    pickable=True
+)
 
-# Afficher la carte interactive
-st_data = st_folium(m, width=700, height=500)
+view_state = pdk.ViewState(
+    longitude=gdf['lon'].mean(),
+    latitude=gdf['lat'].mean(),
+    zoom=9
+)
+
+st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
