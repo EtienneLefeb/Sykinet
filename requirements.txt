@@ -5,3 +5,4 @@ streamlit-folium
 gcsfs
 st-files-connection
 shapely
+pydeck 
