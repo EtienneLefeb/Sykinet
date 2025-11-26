@@ -23,7 +23,7 @@ minx, miny, maxx, maxy = gdf_projete.total_bounds
 # --- Configuration de la figure Matplotlib ---
 # Nous utilisons toujours cette méthode pour garantir le bon aspect ratio,
 # et nous n'utilisons pas les sliders pour figsize (pour éviter la déformation initiale).
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(5, 5))
 
 # ***************************************************************
 # ÉTAPE CLÉ 2 : Définir explicitement les limites des axes (xlim, ylim)
