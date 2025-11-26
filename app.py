@@ -27,8 +27,10 @@ height = st.sidebar.slider("plot height", 1, 25, 1)
 
 fig, ax = plt.subplots(figsize=(width, height))
 ax.set_axis_off()  # retire les axes pour une carte plus propre
+ax.set_xlim(gdf.total_bounds[[0,2]])  # xmin, xmax
+ax.set_ylim(gdf.total_bounds[[1,3]])  # ymin, ymax
 
-gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
+gdf.plot(column='gridcode', cmap='viridis', legend=False, ax=ax)
 
 buf = BytesIO()
 fig.savefig(buf, format="png")
