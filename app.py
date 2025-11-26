@@ -13,7 +13,7 @@ df = conn.read("streamlit-sykinet/base sykinet/base_innondation.csv",
                input_format="csv",
                ttl=600)
 df['geometry'] = df['geometry'].apply(wkt.loads)
-gdf_projete = gpd.GeoDataFrame(df, geometry='geometry')
+gdf_projete = gpd.GeoDataFrame(df, geometry='geometry',crs="EPSG:2154")
 
 # ***************************************************************
 # ÉTAPE CLÉ 1 : Calculer les limites (bounds) de la géométrie projetée
