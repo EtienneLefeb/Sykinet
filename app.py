@@ -29,4 +29,6 @@ ax.set_axis_off()  # retire les axes pour une carte plus propre
 
 gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
 
-st.pyplot(fig)  
+buf = BytesIO()
+fig.savefig(buf, format="png")
+st.image(buf)
