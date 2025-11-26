@@ -37,7 +37,7 @@ ax.set_ylim(miny - y_buffer, maxy + y_buffer)
 
 
 # --- Tracé et Affichage ---
-ax.set_aspect('equal', adjustable='box') # Garantit le bon rapport d'aspect
+ax.set_aspect('equal') # Garantit le bon rapport d'aspect
 ax.set_axis_off()
 gdf_projete.plot(column='gridcode', cmap='viridis', legend=False, ax=ax)
 
