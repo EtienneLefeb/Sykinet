@@ -2,6 +2,7 @@ import streamlit as st
 import geopandas as gpd
 from shapely import wkt
 from st_files_connection import FilesConnection
+import matplotlib.pyplot as plt
 
 st.title("Carte du Finistère")
 
@@ -20,9 +21,8 @@ df['geometry'] = df['geometry'].apply(wkt.loads)
 gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
 # Afficher la carte simple avec couleur par gridcode
-import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots(figsize=(8, 8))
+fig, ax = plt.subplots(figsize=(6, 12))
 gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
 ax.set_axis_off()  # retire les axes pour une carte plus propre
 
