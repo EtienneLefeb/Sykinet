@@ -22,8 +22,10 @@ gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
 # Afficher la carte simple avec couleur par gridcode
 
-fig, ax = plt.subplots(figsize=(6, 12))
-gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.set_aspect(1)
 ax.set_axis_off()  # retire les axes pour une carte plus propre
+
+gdf.plot(column='gridcode', cmap='viridis', legend=True, ax=ax)
 
 st.pyplot(fig)
