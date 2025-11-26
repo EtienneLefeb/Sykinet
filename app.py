@@ -3,6 +3,7 @@ import geopandas as gpd
 from shapely import wkt
 from st_files_connection import FilesConnection
 import matplotlib.pyplot as plt
+from io import BytesIO
 
 st.title("Carte du Finistère")
 
