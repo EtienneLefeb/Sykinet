@@ -17,7 +17,7 @@ df = conn.read("streamlit-sykinet/base sykinet/base_innondation.csv",
 
 # Conversion WKT et GeoDataFrame
 df['geometry'] = df['geometry'].apply(wkt.loads)
-gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326')
+gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
 
 # Projection en Lambert 93 (EPSG:2154) - Maintient la forme
 gdf_projete = gdf.to_crs(epsg=2154)
