@@ -1,8 +1,13 @@
 import streamlit as st
-import pandas as pd
+from st_files_connection import FilesConnection
+import geopandas as gpd
 
-st.write("Here's our first attempt at using data to create a table:")
-st.write(pd.DataFrame({
-    'first column': [1, 2, 3, 5],
-    'second column': [10, 20, 30, 40]
-}))
+st.title("Carte du Finistère")
+gdf = gpd.read_file(
+    "streamlit-sykinet://base sykinet/Dept_29.zip!VECTEUR",
+    storage_options={"token": "C:/Users/lefeb/OneDrive/Documents/Sykinet/base sykinet/sound-bee-479419-k3-89105ea1b821.json"}
+)
+if gdf.crs != "EPSG:4326":
+    gdf = gdf.to_crs("EPSG:4326")
+
+st.map(gdf)
