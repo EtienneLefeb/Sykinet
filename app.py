@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 
 st.title("Carte du Finistère")
-
+st.set_page_config(layout='wide')
 # Créer la connexion GCS via Streamlit
 conn = st.connection("gcs", type=FilesConnection)
 
@@ -27,11 +27,6 @@ height = st.sidebar.slider("plot height", 1, 25, 1)
 
 fig, ax = plt.subplots(figsize=(width, height))
 ax.set_axis_off()  # retire les axes pour une carte plus propre
-ax.set_xlim(gdf.total_bounds[[0,2]])  # xmin, xmax
-ax.set_ylim(gdf.total_bounds[[1,3]])  # ymin, ymax
-
 gdf.plot(column='gridcode', cmap='viridis', legend=False, ax=ax)
 
-buf = BytesIO()
-fig.savefig(buf, format="png")
-st.image(buf)
+st.pyplot(fig)
