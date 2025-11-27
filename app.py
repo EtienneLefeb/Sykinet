@@ -59,6 +59,8 @@ ax.set_ylim(miny - y_buffer, maxy + y_buffer)
 # --- Tracé et Affichage ---
 ax.set_aspect('equal')
 ax.set_axis_off()
+# CODE CORRIGÉ pour le tracé et la personnalisation
+# ... (votre code jusqu'à la ligne ci-dessous)
 
 # Tracé de la carte : Stocker le mappable retourné
 mappable = gdf_projete.plot(
@@ -66,21 +68,30 @@ mappable = gdf_projete.plot(
     ax=ax,
     cmap=cmap,
     norm=norm,
-    legend=True,
-    colorbar_kwds=colorbar_kwds 
+    legend=False, # <-- IMPORTANT : On crée la colorbar manuellement
+    # colorbar_kwds=colorbar_kwds # <-- On pourrait le laisser, mais on simplifie
 )
 
 ax.set_title("Carte d'Aléa Basée sur le Gridcode", fontsize=16)
 
 # ***************************************************************
-# ÉTAPE CORRIGÉE : Récupérer et mettre à jour la colorbar
+# ÉTAPE ULTRA-FIABLE : Créer et personnaliser la colorbar explicitement
 # ***************************************************************
 
-# Récupérer la colorbar via le mappable (le tracé des polygones)
-cbar = mappable.get_figure().get_axes()[-1].colorbar
+# Création de la colorbar à partir du mappable
+# On passe les kwds ici si on les a retirés ci-dessus
+cbar = fig.colorbar(
+    mappable, 
+    ax=ax, 
+    orientation="horizontal",
+    shrink=0.7, 
+    aspect=30,
+    drawedges=True,
+    extend='neither',
+    ticks=ticks # On passe les ticks ici
+)
 
-# S'assurer que les ticks sont centrés et appliquer les étiquettes
-cbar.set_ticks(ticks)
+# Application des labels personnalisés
 cbar.set_ticklabels(legend_labels)
 
 st.pyplot(fig)
