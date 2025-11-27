@@ -31,63 +31,67 @@ if gdf_projete['gridcode'].dtype != 'int64':
         st.error(f"Erreur lors de la conversion de 'gridcode' en entier : {e}")
         st.stop()
 
+# Définition du mapping (valeur : [couleur, label])
+legend_mapping = {
+    0: ['green', "0 : Pas de débordement de nappe ni d'inondation de cave"],
+    1: ['yellow', "1 : Zones potentiellement sujettes aux débordements de nappe"],
+    2: ['blue', "2 : Zones potentiellement sujettes aux inondations de cave"]
+}
 
 minx, miny, maxx, maxy = gdf_projete.total_bounds
 
-# --- Configuration Matplotlib et Colormap ---
+# --- Configuration Matplotlib ---
 fig, ax = plt.subplots(figsize=(10, 10))
-
-colors = ['green', 'yellow', 'blue']
-legend_labels = [
-    "0 : Pas de débordement de nappe ni d'inondation de cave",
-    "1 : Zones potentiellement sujettes aux débordements de nappe",
-    "2 : Zones potentiellement sujettes aux inondations de cave"
-]
-ticks = [0, 1, 2] 
-
-cmap = ListedColormap(colors)
-boundaries = [-0.5, 0.5, 1.5, 2.5]
-norm = BoundaryNorm(boundaries, cmap.N)
 
 # Définition explicite des limites des axes
 x_buffer = (maxx - minx) * 0.02
 y_buffer = (maxy - miny) * 0.02
 ax.set_xlim(minx - x_buffer, maxx + x_buffer)
 ax.set_ylim(miny - y_buffer, maxy + y_buffer)
-
-# --- Tracé et Affichage ---
 ax.set_aspect('equal')
 ax.set_axis_off()
-
-# Tracé de la carte : legend=False pour gérer la colorbar manuellement
-mappable = gdf_projete.plot(
-    column='gridcode',
-    ax=ax,
-    cmap=cmap,
-    norm=norm,
-    legend=False, # Désactive la création automatique problématique
-)
 
 ax.set_title("Carte d'Aléa Basée sur le Gridcode", fontsize=16)
 
 # ***************************************************************
-# CRÉATION MANUELLE ET FIABLE DE LA COLORBAR
+# MODIFICATION CLÉ : Préparer les handles de légende avec des Patch simples
 # ***************************************************************
 
-# Création de la colorbar à partir du mappable
-cbar = fig.colorbar(
-    mappable, 
-    ax=ax, 
-    orientation="horizontal",
-    shrink=0.7, 
-    aspect=30,
-    drawedges=True,
-    extend='neither',
-    ticks=ticks, # Utilisation des ticks numériques
-    label="Grille de Code d'Aléa (Gridcode)"
+legend_handles = [] # Pour stocker les objets Patch
+legend_labels = []  # Pour stocker les labels
+
+# Itération sur les classes numériques (0, 1, 2)
+for code, (color, label) in legend_mapping.items():
+    # 1. Filtrez le GeoDataFrame pour le code actuel
+    subset = gdf_projete[gdf_projete['gridcode'] == code]
+    
+    if not subset.empty:
+        # 2. Tracez le sous-ensemble avec une couleur fixe
+        # Pas besoin de stocker l'objet retourné par plot() ici
+        subset.plot(
+            ax=ax,
+            color=color,
+            edgecolor='white', 
+            linewidth=0.1,
+            # Supprimez le 'label' ici, nous le gérons manuellement
+            # label=label 
+        )
+        
+        # 3. Créez un objet Patch (un simple carré) pour la légende
+        legend_handles.append(Patch(color=color, label=label))
+        legend_labels.append(label)
+
+# ***************************************************************
+# Créer la légende discrète en utilisant les Patch simples
+# ***************************************************************
+
+ax.legend(
+    handles=legend_handles, # On passe nos objets Patch créés explicitement
+    labels=legend_labels,   # On passe nos labels
+    title="Grille de Code d'Aléa",
+    loc='lower right', 
+    fancybox=True, 
+    framealpha=0.8,
+    borderpad=1 
 )
-
-# Application des labels personnalisés aux ticks
-cbar.set_ticklabels(legend_labels)
-
 st.pyplot(fig)
