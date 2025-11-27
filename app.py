@@ -4,6 +4,7 @@ from shapely import wkt
 from st_files_connection import FilesConnection 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
+from matplotlib.patches import Patch # <-- NOUVEL IMPORT
 
 st.title("Carte du département")
 # st.set_page_config() # À mettre en haut du script
