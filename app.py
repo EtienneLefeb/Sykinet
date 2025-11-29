@@ -1,5 +1,6 @@
 import streamlit as st
 import geopandas as gpd
+import pandas as pd
 from shapely import wkt
 from st_files_connection import FilesConnection 
 import matplotlib.pyplot as plt
@@ -83,7 +84,7 @@ def load_and_prepare_data(dept_code):
             # Ensuite, fillna(0) ou dropna() pour s'assurer qu'il n'y a plus de NaN (ici on suppose 0 par défaut si non valide)
             gdf['gridcode'] = pd.to_numeric(gdf['gridcode'], errors='coerce').fillna(0).astype(int)
         
-        return [gdf,gdf2]
+        return (gdf,gdf2)
 
         
     except Exception as e:
