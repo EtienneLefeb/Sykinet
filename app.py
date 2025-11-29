@@ -3,96 +3,197 @@ import geopandas as gpd
 from shapely import wkt
 from st_files_connection import FilesConnection 
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, BoundaryNorm
-from matplotlib.patches import Patch # <-- NOUVEL IMPORT
+from matplotlib.patches import Patch 
+import numpy as np # Import pour la gestion des données
 
-st.title("Carte du département")
-# st.set_page_config() # À mettre en haut du script
-
-dep = [f"{i:02d}" for i in range(1, 96) if i != 20]
-dep.insert(19, "2A") 
-dep.insert(20, "2B") 
-
-departement = st.selectbox("departement",dep)
-# --- Connexion et Chargement des Données ---
-conn = st.connection("gcs", type=FilesConnection)
-df = conn.read("streamlit-sykinet/base sykinet/base_innondation"+departement+".csv",
-                input_format="csv",
-                ttl=600)
-df['geometry'] = df['geometry'].apply(wkt.loads)
-gdf_projete = gpd.GeoDataFrame(df, geometry='geometry',crs="EPSG:2154")
+## 🌊 Application Cartographique d'Aléa d'Inondation 🏠
 
 # ***************************************************************
-# CORRECTION CRITIQUE : Assurer que la colonne 'gridcode' est numérique
+# 1. Configuration de la Page et Titre Principal
 # ***************************************************************
-if gdf_projete['gridcode'].dtype != 'int64':
+
+# Configuration de la page doit être la première commande Streamlit
+st.set_page_config(
+    page_title="Carte d'Aléa d'Inondation",
+    layout="wide", # Utiliser toute la largeur de l'écran
+    initial_sidebar_state="expanded"
+)
+
+st.title("🗺️ Carte d'Aléa du Département")
+st.markdown("Visualisation des zones potentiellement sujettes aux débordements de nappe ou aux inondations de cave.")
+
+# ***************************************************************
+# 2. Sélecteur de Département dans la Barre Latérale (st.sidebar)
+# ***************************************************************
+
+with st.sidebar:
+    st.header("Paramètres de la Carte")
+    
+    # Liste des départements français (inclut 2A/2B pour la Corse)
+    dep = [f"{i:02d}" for i in range(1, 96) if i != 20]
+    dep.insert(19, "2A") 
+    dep.insert(20, "2B") 
+    
+    # Utilisation d'un cache pour éviter de recalculer la liste à chaque interaction
+    @st.cache_data
+    def get_department_list():
+        return dep
+        
+    departement = st.selectbox(
+        "Sélectionnez le Département",
+        get_department_list(),
+        index=30, # Ex: commence sur le 31
+        help="Le code départemental (ex: 75 pour Paris)."
+    )
+    
+    # Afficher le département sélectionné pour confirmation
+    st.info(f"Département sélectionné : **{departement}**")
+
+# ***************************************************************
+# 3. Chargement et Préparation des Données
+# ***************************************************************
+
+# Utiliser st.cache_data pour mettre en cache le GeoDataFrame après le chargement et la conversion
+@st.cache_data(ttl=600)
+def load_and_prepare_data(dept_code):
     try:
-        gdf_projete['gridcode'] = gdf_projete['gridcode'].astype(int)
+        # Connexion et Chargement des Données
+        conn = st.connection("gcs", type=FilesConnection)
+        file_path = f"streamlit-sykinet/base sykinet/base_innondation{dept_code}.csv"
+        
+        # Le widget de statut s'affiche automatiquement avec st.cache_data
+        df = conn.read(file_path, input_format="csv")
+        
+        # Conversion WKT en géométrie
+        df['geometry'] = df['geometry'].apply(wkt.loads)
+        gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:2154")
+        
+        # CORRECTION CRITIQUE : Assurer que la colonne 'gridcode' est numérique
+        if gdf['gridcode'].dtype != 'int64':
+            # Utiliser pd.to_numeric avec errors='coerce' pour gérer les valeurs non-numériques
+            # Ensuite, fillna(0) ou dropna() pour s'assurer qu'il n'y a plus de NaN (ici on suppose 0 par défaut si non valide)
+            gdf['gridcode'] = pd.to_numeric(gdf['gridcode'], errors='coerce').fillna(0).astype(int)
+        
+        return gdf
+        
     except Exception as e:
-        st.error(f"Erreur lors de la conversion de 'gridcode' en entier : {e}")
-        st.stop()
+        # st.error est préférable ici car il interrompt le flow pour cette section
+        st.error(f"⚠️ Erreur lors du chargement des données pour le département {dept_code}: {e}")
+        return None # Retourne None en cas d'échec
+
+# Charger les données avec la fonction cachée
+gdf_projete = load_and_prepare_data(departement)
+
+if gdf_projete is None:
+    st.stop() # Arrêter le script si les données n'ont pas pu être chargées
 
 # Définition du mapping (valeur : [couleur, label])
+# Ajout de 3 pour 'Autres' au cas où des valeurs non-attendues seraient présentes après la correction
 legend_mapping = {
-    0: ['green', "0 : Pas de débordement de nappe ni d'inondation de cave"],
-    1: ['yellow', "1 : Zones potentiellement sujettes aux débordements de nappe"],
-    2: ['blue', "2 : Zones potentiellement sujettes aux inondations de cave"]
+    0: ['green', "0 : Pas de risque (Nappe/Cave)"],
+    1: ['yellow', "1 : Aléa Débordement de Nappe"],
+    2: ['blue', "2 : Aléa Inondation de Cave"]
 }
 
-minx, miny, maxx, maxy = gdf_projete.total_bounds
-
-# --- Configuration Matplotlib ---
-fig, ax = plt.subplots(figsize=(10, 10))
-
-# Définition explicite des limites des axes
-x_buffer = (maxx - minx) * 0.02
-y_buffer = (maxy - miny) * 0.02
-ax.set_xlim(minx - x_buffer, maxx + x_buffer)
-ax.set_ylim(miny - y_buffer, maxy + y_buffer)
-ax.set_aspect('equal')
-ax.set_axis_off()
-
-ax.set_title("Carte d'Aléa Basée sur le Gridcode", fontsize=16)
-
 # ***************************************************************
-# MODIFICATION CLÉ : Préparer les handles de légende avec des Patch simples
+# 4. Affichage et Conteneur Principal de la Carte
 # ***************************************************************
 
-legend_handles = [] # Pour stocker les objets Patch
-legend_labels = []  # Pour stocker les labels
+st.subheader(f"Visualisation de l'Aléa Inondation pour le {departement}")
 
-# Itération sur les classes numériques (0, 1, 2)
-for code, (color, label) in legend_mapping.items():
-    # 1. Filtrez le GeoDataFrame pour le code actuel
-    subset = gdf_projete[gdf_projete['gridcode'] == code]
+# Utiliser un conteneur pour organiser le graphique et la légende sous le titre
+with st.container(border=True):
     
-    if not subset.empty:
-        # 2. Tracez le sous-ensemble avec une couleur fixe
-        # Pas besoin de stocker l'objet retourné par plot() ici
-        subset.plot(
-            ax=ax,
-            color=color,
-            edgecolor='white', 
-            linewidth=0.1,
-            # Supprimez le 'label' ici, nous le gérons manuellement
-            # label=label 
+    # --- Configuration Matplotlib ---
+    fig, ax = plt.subplots(figsize=(12, 12)) # Taille légèrement augmentée pour la clarté
+
+    # Calcul des bornes
+    minx, miny, maxx, maxy = gdf_projete.total_bounds
+    x_buffer = (maxx - minx) * 0.02
+    y_buffer = (maxy - miny) * 0.02
+    
+    ax.set_xlim(minx - x_buffer, maxx + x_buffer)
+    ax.set_ylim(miny - y_buffer, maxy + y_buffer)
+    ax.set_aspect('equal')
+    ax.set_axis_off() # Pas besoin des axes X et Y pour une carte
+    
+    ax.set_title(f"Carte d'Aléa Basée sur le Gridcode - Département {departement}", fontsize=18)
+    
+    legend_handles = []
+    legend_labels = [] 
+    
+    # Itération sur les classes numériques (0, 1, 2)
+    with st.spinner("Génération de la carte..."): # Afficher un spinner pendant le tracé
+        for code, (color, label) in legend_mapping.items():
+            
+            # 1. Filtrez le GeoDataFrame pour le code actuel
+            # Assurez-vous d'utiliser une condition sécurisée après la conversion
+            subset = gdf_projete[gdf_projete['gridcode'] == code]
+            
+            if not subset.empty:
+                # 2. Tracez le sous-ensemble avec une couleur fixe
+                subset.plot(
+                    ax=ax,
+                    color=color,
+                    edgecolor='lightgray', # Changer la couleur de bordure pour une meilleure visibilité
+                    linewidth=0.05,
+                    alpha=0.8 # Ajout de transparence
+                )
+                
+                # 3. Créez un objet Patch pour la légende
+                legend_handles.append(Patch(facecolor=color, edgecolor='black', label=label))
+                legend_labels.append(label)
+
+    # Créer la légende discrète
+    if legend_handles: # S'assurer qu'il y a des éléments à légender
+        ax.legend(
+            handles=legend_handles, 
+            labels=legend_labels, 
+            title="Grille de Code d'Aléa",
+            loc='lower right', # Meilleure position pour la carte
+            fancybox=True, 
+            framealpha=0.85, # Légère opacité
+            borderpad=1,
+            fontsize=10
+        )
+    
+    # Afficher le graphique Matplotlib dans Streamlit
+    st.pyplot(fig, use_container_width=True)
+    
+    st.caption("Source des données : Fichier 'base_innondation[DEP].csv' sur GCS.")
+
+# ***************************************************************
+# 5. Affichage d'un Récapitulatif ou d'un Tableau (Optionnel mais Propre)
+# ***************************************************************
+
+# Afficher un résumé des données tracées
+with st.expander("📊 Résumé des Données par Code d'Aléa"):
+    if 'gridcode' in gdf_projete.columns:
+        counts = gdf_projete['gridcode'].value_counts().sort_index()
+        summary_data = []
+        for code in counts.index:
+            label = legend_mapping.get(code, ['gray', 'Code Inconnu'])[1]
+            summary_data.append({
+                "Code": code,
+                "Description": label,
+                "Nombre d'Entités (Cellules)": counts[code]
+            })
+        
+        st.dataframe(
+            summary_data, 
+            hide_index=True,
+            use_container_width=True
         )
         
-        # 3. Créez un objet Patch (un simple carré) pour la légende
-        legend_handles.append(Patch(color=color, label=label))
-        legend_labels.append(label)
+    else:
+        st.warning("La colonne 'gridcode' est manquante ou invalide pour le résumé.")
 
 # ***************************************************************
-# Créer la légende discrète en utilisant les Patch simples
+# 6. Fin et Bouton d'Action
 # ***************************************************************
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Actualiser la Carte"):
+    st.cache_data.clear()
+    st.rerun()
 
-ax.legend(
-    handles=legend_handles, # On passe nos objets Patch créés explicitement
-    labels=legend_labels,   # On passe nos labels
-    title="Grille de Code d'Aléa",
-    loc='lower right', 
-    fancybox=True, 
-    framealpha=0.8,
-    borderpad=1 
-)
-st.pyplot(fig)
+st.sidebar.success("Prêt à visualiser !")
