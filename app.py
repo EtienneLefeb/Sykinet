@@ -94,7 +94,7 @@ def load_and_prepare_data(dept_code):
 
 
 # Charger les données avec la fonction cachée
-gdf_projete , gdf_projete2 = load_and_prepare_data(departement)
+(gdf_projete , gdf_projete2) = load_and_prepare_data(departement)
 
 if gdf_projete is None:
     st.stop() # Arrêter le script si les données n'ont pas pu être chargées
