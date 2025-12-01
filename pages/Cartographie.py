@@ -266,3 +266,76 @@ if st.sidebar.button("🔄 Actualiser les Cartes (Vider le cache)"):
     st.rerun()
 
 st.sidebar.success("Prêt à visualiser !")
+
+# ***************************************************************
+# 7. Affichage des Graphiques Camemberts (Répartition des Surfaces)
+# ***************************************************************
+
+st.header("📈 Répartition des Surfaces d'Aléa par Risque")
+col_inondation, col_secheresse = st.columns(2)
+
+# --- A. Camembert Inondation ---
+with col_inondation:
+    st.subheader("Surface couverte par l'Aléa Inondation")
+    
+    # 1. Calcul des surfaces
+    # S'assurer que les polygones sont valides (parfois nécessaire avant le calcul de surface)
+    gdf_inondation['area'] = gdf_inondation.geometry.area 
+    
+    # Grouper par 'gridcode' et sommer les surfaces
+    area_by_inondation = gdf_inondation.groupby('gridcode')['area'].sum()
+    
+    # 2. Création des données pour le graphique
+    labels_inondation = [legend_mapping_inondation[code][1] for code in area_by_inondation.index]
+    colors_inondation = [legend_mapping_inondation[code][0] for code in area_by_inondation.index]
+    
+    fig_inondation_pie, ax_inondation_pie = plt.subplots(figsize=(8, 8))
+    
+    ax_inondation_pie.pie(
+        area_by_inondation,
+        labels=labels_inondation,
+        colors=colors_inondation,
+        autopct='%1.1f%%', # Afficher les pourcentages avec une décimale
+        startangle=90,
+        textprops={'fontsize': 12, 'fontweight': 'bold'}
+    )
+    ax_inondation_pie.set_title(f"Répartition de la Surface d'Aléa Inondation ({departement})", fontsize=14)
+    
+    st.pyplot(fig_inondation_pie, use_container_width=True)
+
+# --- B. Camembert Sécheresse ---
+with col_secheresse:
+    st.subheader("Surface couverte par le Risque Sécheresse")
+
+    # 1. Calcul des surfaces
+    gdf_secheresse['area'] = gdf_secheresse.geometry.area 
+    
+    # Grouper par 'ALEA' et sommer les surfaces
+    area_by_secheresse = gdf_secheresse.groupby('ALEA')['area'].sum()
+    
+    # 2. Création des données pour le graphique
+    
+    # On trie les catégories pour que le graphique suive l'ordre logique (Nul, Faible, Moyen, Fort)
+    risk_order = ["Nul", "Faible", "Moyen", "Fort"]
+    area_by_secheresse = area_by_secheresse.reindex(risk_order, fill_value=0)
+    
+    # On filtre pour ne garder que les catégories qui existent (surface > 0)
+    area_by_secheresse = area_by_secheresse[area_by_secheresse > 0] 
+    
+    # Extraction des labels et couleurs selon l'ordre trié
+    labels_secheresse = [legend_mapping_secheresse[code][1] for code in area_by_secheresse.index]
+    colors_secheresse = [legend_mapping_secheresse[code][0] for code in area_by_secheresse.index]
+    
+    fig_secheresse_pie, ax_secheresse_pie = plt.subplots(figsize=(8, 8))
+    
+    ax_secheresse_pie.pie(
+        area_by_secheresse,
+        labels=labels_secheresse,
+        colors=colors_secheresse,
+        autopct='%1.1f%%',
+        startangle=90,
+        textprops={'fontsize': 12, 'fontweight': 'bold'}
+    )
+    ax_secheresse_pie.set_title(f"Répartition de la Surface de Risque Sécheresse ({departement})", fontsize=14)
+    
+    st.pyplot(fig_secheresse_pie, use_container_width=True)
