@@ -125,6 +125,7 @@ legend_mapping_inondation = {
 }
 
 legend_mapping_secheresse = {
+    "Nul": ["grey",'Pas de risque'],
     "Faible": ['#4CAF50', "Risque faible"], # Vert
     "Moyen": ['#FFC107', "Risque moyen"], # Jaune/Orange
     "Fort": ['#F44336', "Risque fort"] # Rouge
