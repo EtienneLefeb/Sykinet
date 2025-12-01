@@ -13,8 +13,6 @@ import numpy as np
 # 1. Configuration de la Page et Titre Principal
 # ***************************************************************
 
-# La configuration de la page peut être simplifiée ici car elle est définie dans la page principale,
-# mais la garder assure que cette page a la bonne mise en page si elle est chargée seule.
 st.set_page_config(
     page_title="Carte d'Aléa d'Inondation et Sécheresse",
     layout="wide", 
@@ -124,11 +122,12 @@ legend_mapping_inondation = {
     2: ['#2196F3', "Aléa Inondation de Cave"] # Bleu
 }
 
+# --- LÉGENDE DE SÉCHERESSE MODIFIÉE POUR RESPECTER L'ÉCHELLE D'IMPORTANCE ---
 legend_mapping_secheresse = {
-    "Nul": ["grey",'Pas de risque'],
-    "Faible": ['#4CAF50', "Risque faible"], # Vert
-    "Moyen": ['#FFC107', "Risque moyen"], # Jaune/Orange
-    "Fort": ['#F44336', "Risque fort"] # Rouge
+    "Nul": ["#E8F5E9",'Pas de risque (Nul)'], # Vert très clair, proche du blanc
+    "Faible": ['#4CAF50', "Risque faible"],    # Vert
+    "Moyen": ['#FFC107', "Risque moyen"],    # Jaune/Orange
+    "Fort": ['#F44336', "Risque fort"]      # Rouge
 }
 
 # ***************************************************************
@@ -157,10 +156,9 @@ with st.container(border=True):
     
     with st.spinner("Génération de la carte d'inondation..."):
         # Dessiner le fond (par exemple, les zones sans risque ou l'ensemble du département)
-        # Ceci est une amélioration pour s'assurer que même les zones sans code apparaissent (si la géométrie est complète)
         gdf_inondation.plot(
             ax=ax_inondation,
-            color='lightgrey', # Couleur de fond
+            color='lightgrey', # Couleur de fond par défaut
             edgecolor='white',
             linewidth=0.01,
             alpha=0.5
@@ -175,7 +173,7 @@ with st.container(border=True):
                     color=color,
                     edgecolor='lightgray',
                     linewidth=0.05,
-                    alpha=0.9 # Augmenter l'alpha pour les zones spécifiques
+                    alpha=0.9
                 )
                 legend_handles.append(Patch(facecolor=color, edgecolor='black', label=label))
 
@@ -227,7 +225,7 @@ with st.container(border=True):
         alpha=0.5
     )
 
-    # Itération sur les classes de texte ("Faible", "Moyen", "Fort")
+    # Itération sur les classes de texte ("Nul", "Faible", "Moyen", "Fort")
     with st.spinner("Génération de la carte sécheresse..."):
         for code, (color, label) in legend_mapping_secheresse.items():
             
