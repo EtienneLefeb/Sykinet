@@ -20,7 +20,7 @@ st.header("Sommaire")
 st.markdown("""
 - **Analyse des données climatiques :** Visualisation des risques d'inondation (débordements de nappe, inondations de cave) et de sécheresse.
 - **Analyse des données de valeurs foncière :** Analyse des données sur la France entière.
-- **Mise en relation des données d'innondation et de sécheresse avec les valeurs foncières **            
+- **Mise en relation des données d'innondation et de sécheresse avec les valeurs foncières :** recherche d'un lien quantitatif entre les données.            
 - **Cartes Interactives :** Pour chaque département, nous pouvons visualiser leur situation en terme de risques d'innondation et de sécheresse.
 """)
 
