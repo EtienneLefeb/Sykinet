@@ -11,26 +11,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("🏡 Bienvenue sur Sykinet Aléa Cartographie")
+st.title("🏡 Bienvenue sur notre page de visualisation de données Sykinet")
 st.markdown("---")
 
-st.info("Cette application vous permet de visualiser les cartes d'aléa d'inondation et de sécheresse pour un département français sélectionné.")
+st.info("Notre problématique est la recherche d'un lien entre les bâtiments résidentiels (maisons et appartements) et les risques de sécheresse et d'innondation sur leur terrain.")
 
-st.header("Fonctionnalités")
+st.header("Sommaire")
 st.markdown("""
-- **Cartes Interactives :** Visualisation des risques d'inondation (débordements de nappe, inondations de cave) et de sécheresse.
-- **Sélection par Département :** Choisissez le département pour lequel vous souhaitez analyser l'aléa.
-- **Données Mises en Cache :** Chargement optimisé des données GeoPandas pour une meilleure performance.
+- **Analyse des données climatiques :** Visualisation des risques d'inondation (débordements de nappe, inondations de cave) et de sécheresse.
+- **Analyse des données de valeurs foncière :** Analyse des données sur la France entière.
+- **Mise en relation des données d'innondation et de sécheresse avec les valeurs foncières **            
+- **Cartes Interactives :** Pour chaque département, nous pouvons visualiser leur situation en terme de risques d'innondation et de sécheresse.
 """)
 
 st.markdown("---")
 # L'interface multi-page de Streamlit crée automatiquement un lien vers la page "Cartographie"
 # dans la barre latérale gauche.
 
-st.subheader("Accès aux Cartes")
+st.subheader("Naviguer entre les onglets")
 
 st.markdown("""
-Cliquez sur le lien **'Cartographie'** dans la barre latérale gauche pour accéder à l'outil de visualisation des cartes.
+Utilisez la barre latérale pour naviguer entre les pages de l'application.
 """)
 
 # Un message d'aide simple dans la barre latérale
