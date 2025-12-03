@@ -52,8 +52,9 @@ with col1_inond:
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107']) # Couleurs claires
     plt.xlabel("Type de Risque d'inondation")
     plt.ylabel("Nombre de transactions")
-    plt.xticks(rotation=0) # Améliore la lisibilité des étiquettes
+    plt.xticks(rotation=45, ha='right') 
     plt.tight_layout()
+
     st.pyplot(fig)
 
 with col2_inond:
@@ -99,7 +100,7 @@ sns.boxplot(
 plt.title('Distribution du Prix/m² en fonction du Type de Risque d\'Inondation')
 plt.xlabel("Type de Risque d'Inondation")
 plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
-plt.xticks(rotation=15, ha='right') # Rotation pour lisibilité
+plt.xticks(rotation=45, ha='right') 
 plt.tight_layout()
 st.pyplot(fig3)
 
@@ -147,7 +148,8 @@ with col2_sech_scatter:
     
     # S'assurer que 'zone_niveau' est traité comme catégorie pour la couleur
     df_plot_sech['zone_niveau_str'] = df_plot_sech['zone_niveau'].astype(str)
-    
+    df_plot_sech=df_plot_sech.dropna()
+    df_plot_sech = df_plot_sech.sort_values(by = "zone_niveau_str")
     # UTILISATION DE PLOTLY pour un scatter interactif
     fig4_plotly = px.scatter(
         df_plot_sech,
