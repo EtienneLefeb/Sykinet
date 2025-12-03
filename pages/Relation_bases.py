@@ -2,117 +2,160 @@ import streamlit as st
 import geopandas as gpd
 import pandas as pd
 from shapely import wkt
-from st_files_connection import FilesConnection  # Import nécessaire pour la connexion GCS
+# Import nécessaire pour la connexion GCS (Gardé)
+from st_files_connection import FilesConnection 
 import matplotlib.pyplot as plt
 import numpy as np
-from io import StringIO
 import seaborn as sns
+# On ajoute Plotly pour des graphiques interactifs (Recommandé)
+import plotly.express as px
 
-
-
+# --- 1. CONFIGURATION DE PAGE ---
 st.set_page_config(
-    page_title="Mise en relation des risques climatiques et des valeurs foncières",
+    page_title="Risques Climatiques et Valeurs Foncières",
     layout="wide", 
     initial_sidebar_state="expanded"
 )
 
-st.title("Mise en relation des risques climatiques et des valeurs foncières")
+# --- 2. TITRE ET INTRODUCTION ---
+st.title("Mise en relation des risques climatiques et des valeurs foncières 🏠📊")
+
 st.markdown("""
-La base de données des valeurs foncières est très complète,
-nous avons choisi de nous concentrer sur une base ne contenant que les ventes d'appartements et une autre base ne contenant que des ventes de maisons. 
-Ces bases nous les avons réduites aux régions de Nouvelle Aquitaine, d'Occitanie et de Centre-Val de Loire, où dans chaque département, les risques sécheresse et inondations sont présents.
+Cette application analyse l'impact des **risques d'inondation** et de **sécheresse** sur la **valeur foncière** des appartements dans les régions Nouvelle Aquitaine, Occitanie et Centre-Val de Loire.
 """)
 
+# Utilisation d'un expander pour cacher le texte d'introduction si nécessaire
+with st.expander("Détails de la méthodologie"):
+    st.markdown("""
+    La base de données des valeurs foncières a été réduite aux ventes d'appartements et limitée aux régions de Nouvelle Aquitaine, d'Occitanie et de Centre-Val de Loire, où les risques sécheresse et inondations sont avérés.
+    """)
+
 path = "streamlit-sykinet/base sykinet/"
-conn = st.connection("gcs", type=FilesConnection) 
-df_resultat_innond_final = conn.read(path + "base_innond_final.csv", input_format="csv")    
+conn = st.connection("gcs", type=FilesConnection)
 
+# --- 3. ANALYSE DU RISQUE D'INONDATION ---
+st.header("Analyse du Risque d'Inondation 🌊")
+st.markdown("---")
 
-counts = df_resultat_innond_final['Risque_innond'].value_counts()
+# Chargement des données d'inondation
+df_resultat_innond_final = conn.read(path + "base_innond_final.csv", input_format="csv")
 
-# Création du graphique
-fig = plt.figure(figsize=(6,4))
-counts.plot(kind='bar')
+# Création de 2 colonnes pour afficher côte à côte le décompte et le scatter
+col1_inond, col2_inond = st.columns(2)
 
-plt.xlabel("Risque d'inondation")
-plt.ylabel("Nombre de cas")
-plt.title("Répartition des modalités de Risque_inondonations")
-plt.tight_layout()
-st.pyplot(fig)
+with col1_inond:
+    st.subheader("Répartition des types de Risques d'Inondation")
+    counts = df_resultat_innond_final['Risque_innond'].value_counts()
+    
+    # Création d'un graphique à barres plus propre avec Streamlit/Matplotlib
+    fig = plt.figure(figsize=(6,4))
+    counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107']) # Couleurs claires
+    plt.xlabel("Type de Risque d'inondation")
+    plt.ylabel("Nombre de transactions")
+    plt.xticks(rotation=0) # Améliore la lisibilité des étiquettes
+    plt.tight_layout()
+    st.pyplot(fig)
 
-x_0 = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=="Pas de débordement de nappe ni d'inondation de cave"]["surface_reelle_bati"]
-y_0 = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=="Pas de débordement de nappe ni d'inondation de cave"]["valeur_fonciere"]
+with col2_inond:
+    st.subheader("Valeur Foncière vs. Surface (Filtrée)")
+    # Reformatage des données pour le scatter plot
+    df_plot_inond = df_resultat_innond_final.copy()
+    
+    # Filtrer pour avoir une meilleure visualisation (comme dans le code original)
+    df_plot_inond = df_plot_inond[(df_plot_inond["surface_reelle_bati"] < 400) & (df_plot_inond["valeur_fonciere"] < 1e6)]
+    
+    # UTILISATION DE PLOTLY pour un scatter interactif et plus beau
+    fig2_plotly = px.scatter(
+        df_plot_inond,
+        x="surface_reelle_bati",
+        y="valeur_fonciere",
+        color="Risque_innond",
+        hover_name="Risque_innond",
+        title="Valeur Foncière par Surface selon le Risque",
+        color_discrete_map={
+            "Pas de débordement de nappe ni d'inondation de cave": '#4CAF50',
+            "Zones potentiellement sujettes aux inondations de cave": '#2196F3',
+            "Zones potentiellement sujettes aux débordements de nappe": '#FFC107'
+        }
+    )
+    fig2_plotly.update_layout(height=400)
+    st.plotly_chart(fig2_plotly, use_container_width=True)
 
-x_cave = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=='Zones potentiellement sujettes aux inondations de cave']["surface_reelle_bati"]
-y_cave = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=='Zones potentiellement sujettes aux inondations de cave']["valeur_fonciere"]
-
-x_nappe = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=='Zones potentiellement sujettes aux débordements de nappe']["surface_reelle_bati"]
-y_nappe = df_resultat_innond_final[df_resultat_innond_final["Risque_innond"]=='Zones potentiellement sujettes aux débordements de nappe']["valeur_fonciere"]
-
-fig2 = plt.figure()
-plt.scatter(x_0 , y_0 , color = '#4CAF50',label = "Pas de risque")
-plt.scatter(x_cave , y_cave , color = '#2196F3',alpha = 0.5,label="Inondations de cave",marker ="*")
-plt.scatter(x_nappe , y_nappe , color = '#FFC107' , alpha = 0.3, label = "debordements de nappes",marker = "+")
-plt.xlim([0,400])
-plt.ylim([0,1e6])
-plt.legend()
-st.pyplot(fig2)
-
+# Box Plot pour le risque inondation
+st.subheader("Impact du Risque sur le Prix/m² (Inondation)")
 df_resultat_innond_final["valeur_fonciere_par_surface"] = df_resultat_innond_final['valeur_fonciere']/df_resultat_innond_final['surface_reelle_bati']
 df_resultat_innond_final = df_resultat_innond_final[~df_resultat_innond_final["Risque_innond"].isna()]
 
-fig3 = plt.figure(figsize=(20, 6))
-# Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
+# Nettoyage des outliers extrêmes pour le graphique (ylim à 1e4)
+df_innond_filtered = df_resultat_innond_final[df_resultat_innond_final["valeur_fonciere_par_surface"] < 1e4]
+
+fig3 = plt.figure(figsize=(10, 6))
 sns.boxplot(
     x='Risque_innond', 
     y='valeur_fonciere_par_surface', 
-    data=df_resultat_innond_final,
-#    order=[0.0, 1.0, 2.0] # Assure l'ordre correct des niveaux
+    data=df_innond_filtered,
+    palette=['#4CAF50', '#2196F3', '#FFC107'] # Palette cohérente
 )
-plt.title('Distribution de la Valeur Foncière par Zone Niveau (Box Plot)')
-plt.xlabel('Zone Niveau (Ordinal)')
-plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
-plt.ylim([0,1e4])
+plt.title('Distribution du Prix/m² en fonction du Type de Risque d\'Inondation')
+plt.xlabel("Type de Risque d'Inondation")
+plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
+plt.xticks(rotation=15, ha='right') # Rotation pour lisibilité
+plt.tight_layout()
 st.pyplot(fig3)
 
 
+# --- 4. ANALYSE DU RISQUE SÉCHERESSE ---
+st.header("Analyse du Risque Sécheresse 🏜️")
+st.markdown("---")
+
+# Chargement des données de sécheresse
+df_resultat = conn.read(path + "base_sech_final.csv", input_format="csv") 
+df_resultat["valeur_fonciere_par_surface"] = df_resultat['valeur_fonciere']/df_resultat['surface_reelle_bati']
 
 
+# Création de 2 colonnes pour afficher le scatter et le box plot
+col1_sech, col2_sech = st.columns(2)
 
-df_resultat = conn.read(path + "base_sech_final.csv", input_format="csv")    
-df_resultat["zone_niveau"].plot.hist()
+with col1_sech:
+    st.subheader("Valeur Foncière vs. Surface selon le Niveau de Sécheresse")
+    
+    # Filtrer les données pour le graphique scatter (comme dans l'original)
+    df_plot_sech = df_resultat[(df_resultat["surface_reelle_bati"] < 400) & (df_resultat["valeur_fonciere"] < 1e6)].copy()
+    
+    # S'assurer que 'zone_niveau' est traité comme catégorie pour la couleur
+    df_plot_sech['zone_niveau_str'] = df_plot_sech['zone_niveau'].astype(str)
+    
+    # UTILISATION DE PLOTLY pour un scatter interactif et clair
+    fig4_plotly = px.scatter(
+        df_plot_sech,
+        x="surface_reelle_bati",
+        y="valeur_fonciere",
+        color="zone_niveau_str",
+        hover_name="zone_niveau_str",
+        title="Impact du Niveau de Sécheresse",
+        labels={'zone_niveau_str': 'Niveau Sécheresse'},
+        color_discrete_sequence=['#E8F5E9', '#4CAF50', '#FFC107', '#F44336'] # Couleurs claires à fortes
+    )
+    fig4_plotly.update_layout(height=450)
+    st.plotly_chart(fig4_plotly, use_container_width=True)
 
-x_0 = df_resultat[df_resultat["zone_niveau"]==0.0]["surface_reelle_bati"]
-y_0 = df_resultat[df_resultat["zone_niveau"]==0.0]["valeur_fonciere"]
 
-x_1 = df_resultat[df_resultat["zone_niveau"]==1.0]["surface_reelle_bati"]
-y_1 = df_resultat[df_resultat["zone_niveau"]==1.0]["valeur_fonciere"]
-
-x_2 = df_resultat[df_resultat["zone_niveau"]==2.0]["surface_reelle_bati"]
-y_2 = df_resultat[df_resultat["zone_niveau"]==2.0]["valeur_fonciere"]
-
-x_3 = df_resultat[df_resultat["zone_niveau"]==3.0]["surface_reelle_bati"]
-y_3 = df_resultat[df_resultat["zone_niveau"]==3.0]["valeur_fonciere"]
-
-fig4 = plt.figure()
-plt.scatter(x_0 , y_0 , color = "#E8F5E9")
-plt.scatter(x_1 , y_1 , color = '#4CAF50')
-plt.scatter(x_2 , y_2 , color = '#FFC107' , alpha = 0.3)
-plt.scatter(x_3 , y_3 , color = '#F44336' , alpha = 0.3)
-
-st.pyplot(fig4)
-
-
-fig5=plt.figure(figsize=(10, 6))
-# Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
-sns.boxplot(
-    x='zone_niveau', 
-    y='valeur_fonciere_par_surface', 
-    data=df_resultat,
-    order=[0.0, 1.0, 2.0, 3.0] # Assure l'ordre correct des niveaux
-)
-plt.title('Distribution de la Valeur Foncière par Zone Niveau (Box Plot)')
-plt.xlabel('Zone Niveau (Ordinal)')
-plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
-plt.ylim([0,1e4])
-st.pyplot(fig5)
+with col2_sech:
+    st.subheader("Impact du Risque sur le Prix/m² (Sécheresse)")
+    
+    # Nettoyage des outliers extrêmes pour le graphique (ylim à 1e4)
+    df_sech_filtered = df_resultat[df_resultat["valeur_fonciere_par_surface"] < 1e4]
+    
+    fig5 = plt.figure(figsize=(8, 6))
+    sns.boxplot(
+        x='zone_niveau', 
+        y='valeur_fonciere_par_surface', 
+        data=df_sech_filtered,
+        order=[0.0, 1.0, 2.0, 3.0], 
+        palette=['#4CAF50', '#FFC107', '#F44336', '#B71C1C'] # Dégradé de risque
+    )
+    plt.title('Distribution du Prix/m² par Niveau de Risque Sécheresse')
+    plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
+    plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
+    plt.tight_layout()
+    st.pyplot(fig5)
