@@ -48,7 +48,7 @@ with col1_inond:
     counts = df_resultat_innond_final['Risque_innond'].value_counts()
     
     # Création d'un graphique à barres plus propre avec Streamlit/Matplotlib
-    fig = plt.figure(figsize=(15,6))
+    fig = plt.figure(figsize=(8,4))
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107']) # Couleurs claires
     plt.xlabel("Type de Risque d'inondation")
     plt.ylabel("Nombre de transactions")
@@ -90,7 +90,7 @@ df_resultat_innond_final = df_resultat_innond_final[~df_resultat_innond_final["R
 # Nettoyage des outliers extrêmes pour le graphique (ylim à 1e4)
 df_innond_filtered = df_resultat_innond_final[df_resultat_innond_final["valeur_fonciere_par_surface"] < 1e4]
 
-fig3 = plt.figure(figsize=(25, 10))
+fig3 = plt.figure(figsize=(10, 6))
 sns.boxplot(
     x='Risque_innond', 
     y='valeur_fonciere_par_surface', 
