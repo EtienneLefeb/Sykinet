@@ -47,7 +47,7 @@ def create_risk_map(gdf_data, title, cmap_color='viridis'):
     Crée et affiche une carte choroplèthe Matplotlib à partir d'un GeoDataFrame.
     """
     # 1. Créer la figure et l'axe Matplotlib
-    # Utiliser un rapport hauteur/largeur pour l'Europe/France
+    # Réduction de la taille de la figure de (10, 8) à (8, 6)
     fig, ax = plt.subplots(1, 1, figsize=(8, 6)) 
 
     # 2. Tracer le GeoDataFrame
@@ -80,6 +80,32 @@ def create_risk_map(gdf_data, title, cmap_color='viridis'):
     # 4. Afficher la carte
     st.pyplot(fig)
 
+# --- NOUVELLE Fonction de Création d'Histogramme Modulaire ---
+
+def create_risk_histogram(gdf_data, title, color='skyblue'):
+    """
+    Crée et affiche un histogramme de la distribution de la variable 'NIVEAU'.
+    """
+    # Créer la figure et l'axe Matplotlib
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5)) 
+
+    # Tracer l'histogramme
+    # 15 bins entre 0 et 1 pour une granularité correcte des pourcentages
+    ax.hist(gdf_data['NIVEAU'].dropna(), bins=15, range=(0, 1), edgecolor='black', color=color, alpha=0.7)
+
+    # Personnaliser le graphique
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel("Niveau de Risque (Proportion de la zone affectée, de 0.0 à 1.0)")
+    ax.set_ylabel("Nombre de Zones (Départements)")
+    ax.grid(axis='y', linestyle='--', alpha=0.6)
+    
+    # Limiter l'axe des x de 0 à 1 (puisque NIVEAU est une proportion)
+    ax.set_xlim(0, 1)
+
+    # Afficher le graphique dans Streamlit
+    st.pyplot(fig)
+
+
 # ***************************************************************
 # 1. Configuration de la Page et Titre Principal
 # ***************************************************************
@@ -99,7 +125,7 @@ Le niveau de risque est calculé en fonction de la proportion de la zone consid�
 
 st.divider()
 
-# --- Chargement des données (Utiliser les fonctions de simulation/réelles) ---
+# --- Chargement des données ---
 
 # Configuration pour les données réelles (Chemins d'accès GCS)
 RGA_FILE_PATH = "streamlit-sykinet/base sykinet/df_secheresse_complet.csv"
@@ -108,9 +134,6 @@ INNONDATION_FILE_PATH = "streamlit-sykinet/base sykinet/df_innond_complet.csv"
 # Appel des fonctions de chargement réel
 gdf_rga = load_real_data(RGA_FILE_PATH, "secheresse")
 gdf_innondation = load_real_data(INNONDATION_FILE_PATH, "innondation")
-
-# Suppression de la note d'information sur les données simulées (qui ne sont plus utilisées)
-# st.info("⚠️ **Note:** Les cartes affichées utilisent des données et des géométries simulées pour des raisons de démonstration. Les valeurs de risque sont arbitraires.")
 
 
 # ***************************************************************
@@ -124,38 +147,54 @@ with tab1:
     st.markdown("""
     Le risque de Retrait-Gonflement des Argiles (RGA) est un aléa majeur en France, 
     causant des dommages importants aux habitations individuelles.
-    La carte ci-dessous visualise la **proportion de la zone** exposée à un risque moyen ou fort de RGA.
     """)
     
-    # Utilisation de la fonction modulaire
-    create_risk_map(
-        gdf_rga, 
-        "Carte des départements les plus touchés par le risque RGA",
-        cmap_color='YlOrRd' # Utiliser des couleurs chaudes pour la sécheresse
-    )
+    col_map, col_hist = st.columns(2)
 
-    # st.subheader("Détails du Calcul")
-    # st.code(
-    #     """
-    #     NIVEAU = (pct_moyen + pct_fort) / 
-    #              (pct_nulle + pct_faible + pct_moyen + pct_fort)
-    #     """
-    # )
+    with col_map:
+        st.subheader("Distribution Géographique du Risque")
+        # Utilisation de la fonction modulaire pour la carte
+        create_risk_map(
+            gdf_rga, 
+            "Carte des départements les plus touchés par le risque RGA",
+            cmap_color='YlOrRd' # Utiliser des couleurs chaudes pour la sécheresse
+        )
+
+    with col_hist:
+        st.subheader("Répartition du Niveau de Risque (Histogramme)")
+        # Utilisation de la nouvelle fonction pour l'histogramme
+        create_risk_histogram(
+            gdf_rga, 
+            "Distribution des Niveaux de Risque RGA par Département",
+            color='orange'
+        )
+
 
 with tab2:
     st.header("Analyse du Risque d'Inondation")
     st.markdown("""
     Ce risque combine la submersion des caves et le débordement des nappes phréatiques.
-    La carte montre la **proportion de la zone** où ces deux types d'aléas sont présents.
     """)
     
-    # Utilisation de la fonction modulaire
-    create_risk_map(
-        gdf_innondation, 
-        "Carte des départements les plus touchés par le risque inondation",
-        cmap_color='Blues' # Utiliser des couleurs froides pour l'eau/inondation
-    )
+    col_map, col_hist = st.columns(2)
+    
+    with col_map:
+        st.subheader("Distribution Géographique du Risque")
+        # Utilisation de la fonction modulaire pour la carte
+        create_risk_map(
+            gdf_innondation, 
+            "Carte des départements les plus touchés par le risque inondation",
+            cmap_color='Blues' # Utiliser des couleurs froides pour l'eau/inondation
+        )
 
+    with col_hist:
+        st.subheader("Répartition du Niveau de Risque (Histogramme)")
+        # Utilisation de la nouvelle fonction pour l'histogramme
+        create_risk_histogram(
+            gdf_innondation, 
+            "Distribution des Niveaux de Risque Inondation par Département",
+            color='blue'
+        )
 
 st.sidebar.markdown("## Paramètres de Visualisation")
-st.sidebar.markdown("Pour l'instant, les cartes affichent la vue globale. Des filtres par période ou intensité pourront être ajoutés ici.")
+st.sidebar.markdown("Pour l'instant, les cartes et histogrammes affichent la vue globale. Des filtres par période ou intensité pourront être ajoutés ici.")
