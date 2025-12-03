@@ -74,3 +74,45 @@ plt.xlabel('Zone Niveau (Ordinal)')
 plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
 plt.ylim([0,1e4])
 st.pyplot(fig3)
+
+
+
+
+
+df_resultat = conn.read(path + "base_sech_final.csv", input_format="csv")    
+df_resultat["zone_niveau"].plot.hist()
+
+x_0 = df_resultat[df_resultat["zone_niveau"]==0.0]["surface_reelle_bati"]
+y_0 = df_resultat[df_resultat["zone_niveau"]==0.0]["valeur_fonciere"]
+
+x_1 = df_resultat[df_resultat["zone_niveau"]==1.0]["surface_reelle_bati"]
+y_1 = df_resultat[df_resultat["zone_niveau"]==1.0]["valeur_fonciere"]
+
+x_2 = df_resultat[df_resultat["zone_niveau"]==2.0]["surface_reelle_bati"]
+y_2 = df_resultat[df_resultat["zone_niveau"]==2.0]["valeur_fonciere"]
+
+x_3 = df_resultat[df_resultat["zone_niveau"]==3.0]["surface_reelle_bati"]
+y_3 = df_resultat[df_resultat["zone_niveau"]==3.0]["valeur_fonciere"]
+
+fig4 = plt.figure()
+plt.scatter(x_0 , y_0 , color = "#E8F5E9")
+plt.scatter(x_1 , y_1 , color = '#4CAF50')
+plt.scatter(x_2 , y_2 , color = '#FFC107' , alpha = 0.3)
+plt.scatter(x_3 , y_3 , color = '#F44336' , alpha = 0.3)
+
+st.pyplot(fig4)
+
+
+fig5=plt.figure(figsize=(10, 6))
+# Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
+sns.boxplot(
+    x='zone_niveau', 
+    y='valeur_fonciere_par_surface', 
+    data=df_resultat,
+    order=[0.0, 1.0, 2.0, 3.0] # Assure l'ordre correct des niveaux
+)
+plt.title('Distribution de la Valeur Foncière par Zone Niveau (Box Plot)')
+plt.xlabel('Zone Niveau (Ordinal)')
+plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
+plt.ylim([0,1e4])
+st.pyplot(fig5)
