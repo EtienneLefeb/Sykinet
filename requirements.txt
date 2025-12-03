@@ -8,3 +8,4 @@ shapely
 pydeck 
 matplotlib
 seaborn
+plotly
