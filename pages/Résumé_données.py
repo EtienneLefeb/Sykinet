@@ -22,16 +22,16 @@ st.set_page_config(
 )
 
 st.title("Premières représentations ")
-st.markdown("Visualisation des zones les plus touchées par l'aléa Sécheresse et l'aléa innondation")
+st.markdown("Visualisation des zones les plus touchées par l'aléa sécheresse et l'aléa innondation")
 
 conn = st.connection("gcs", type=FilesConnection) 
-file_path = "streamlit-sykinet/base sykinet/df_secheresse_surface.csv"    
+file_path = "streamlit-sykinet/base sykinet/df_secheresse_complet.csv"    
 df = conn.read(file_path, input_format="csv")
 df['geometry'] = df['geometry'].apply(wkt.loads)
 gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:2154")
 
 # Assurez-vous que la colonne NIVEAU est numérique pour le coloriage
-gdf["NIVEAU"] = gdf["% surface NIVEAU = 3.0"] + gdf["% surface NIVEAU = 2.0"] / (gdf["% surface NIVEAU = 0.0"] + gdf["% surface NIVEAU = 1.0"] + gdf["% surface NIVEAU = 2.0"] +gdf["% surface NIVEAU = 3.0"])
+gdf["NIVEAU"] = gdf["pct_moyen"] + gdf["pct_fort"] / (gdf["pct_nulle"] + gdf["pct_faible"] + gdf["pct_moyen"] +gdf["pct_fort"])
 # --- Création de la Carte avec Matplotlib et Geopandas ---
 
 # 1. Créer la figure et l'axe Matplotlib
@@ -55,7 +55,7 @@ gdf.plot(
 )
 
 # 3. Personnaliser la carte
-ax.set_title("Carte des Zones d'Aléa par Niveau (0.0 à 3.0)", fontsize=18)
+ax.set_title("Carte des départements les plus touchés par le risque RGA)", fontsize=18)
 ax.set_axis_off() # Masquer les axes (latitude/longitude)
 
 # 4. Afficher la carte dans Streamlit
