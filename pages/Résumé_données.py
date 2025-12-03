@@ -48,7 +48,7 @@ def create_risk_map(gdf_data, title, cmap_color='viridis'):
     """
     # 1. Créer la figure et l'axe Matplotlib
     # Utiliser un rapport hauteur/largeur pour l'Europe/France
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8)) 
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6)) 
 
     # 2. Tracer le GeoDataFrame
     gdf_data.plot(
@@ -156,13 +156,6 @@ with tab2:
         cmap_color='Blues' # Utiliser des couleurs froides pour l'eau/inondation
     )
 
-    # st.subheader("Détails du Calcul")
-    # st.code(
-    #     """
-    #     NIVEAU = (pct_innond_caves + pct_debord_nappes) / 
-    #              (pct_innond_caves + pct_debord_nappes + pct_sans_risque)
-    #     """
-    # )
 
 st.sidebar.markdown("## Paramètres de Visualisation")
 st.sidebar.markdown("Pour l'instant, les cartes affichent la vue globale. Des filtres par période ou intensité pourront être ajoutés ici.")
