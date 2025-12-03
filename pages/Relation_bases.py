@@ -48,7 +48,7 @@ with col1_inond:
     counts = df_resultat_innond_final['Risque_innond'].value_counts()
     
     # Création d'un graphique à barres plus propre avec Streamlit/Matplotlib
-    fig = plt.figure(figsize=(6,4))
+    fig = plt.figure(figsize=(20,4))
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107']) # Couleurs claires
     plt.xlabel("Type de Risque d'inondation")
     plt.ylabel("Nombre de transactions")
@@ -104,19 +104,42 @@ plt.tight_layout()
 st.pyplot(fig3)
 
 
+# ... (Partie Inondation)
+
 # --- 4. ANALYSE DU RISQUE SÉCHERESSE ---
 st.header("Analyse du Risque Sécheresse 🏜️")
 st.markdown("---")
 
-# Chargement des données de sécheresse
+# Chargement des données de sécheresse (déjà présent)
 df_resultat = conn.read(path + "base_sech_final.csv", input_format="csv") 
 df_resultat["valeur_fonciere_par_surface"] = df_resultat['valeur_fonciere']/df_resultat['surface_reelle_bati']
 
 
-# Création de 2 colonnes pour afficher le scatter et le box plot
-col1_sech, col2_sech = st.columns(2)
+# NOUVEAU : Deux colonnes pour la distribution et le scatter
+col1_sech_dist, col2_sech_scatter = st.columns(2)
 
-with col1_sech:
+# --- NOUVEAU GRAPHIQUE : RÉPARTITION DU RISQUE SÉCHERESSE ---
+with col1_sech_dist:
+    st.subheader("Répartition des Niveaux de Risque Sécheresse")
+    
+    # 1. Compter les occurrences
+    secheresse_counts = df_resultat['zone_niveau'].value_counts().sort_index()
+    
+    # 2. Créer la figure Matplotlib
+    fig_sech_dist = plt.figure(figsize=(6,4))
+    secheresse_counts.plot(
+        kind='bar', 
+        color=['#4CAF50', '#FFC107', '#F44336', '#B71C1C'] # Dégradé de risque
+    )
+    plt.xlabel("Niveau de Risque Sécheresse")
+    plt.ylabel("Nombre de transactions")
+    plt.title("Répartition des Niveaux de Risque (0.0 à 3.0)")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    st.pyplot(fig_sech_dist)
+
+
+with col2_sech_scatter:
     st.subheader("Valeur Foncière vs. Surface selon le Niveau de Sécheresse")
     
     # Filtrer les données pour le graphique scatter (comme dans l'original)
@@ -125,7 +148,7 @@ with col1_sech:
     # S'assurer que 'zone_niveau' est traité comme catégorie pour la couleur
     df_plot_sech['zone_niveau_str'] = df_plot_sech['zone_niveau'].astype(str)
     
-    # UTILISATION DE PLOTLY pour un scatter interactif et clair
+    # UTILISATION DE PLOTLY pour un scatter interactif
     fig4_plotly = px.scatter(
         df_plot_sech,
         x="surface_reelle_bati",
@@ -134,28 +157,28 @@ with col1_sech:
         hover_name="zone_niveau_str",
         title="Impact du Niveau de Sécheresse",
         labels={'zone_niveau_str': 'Niveau Sécheresse'},
-        color_discrete_sequence=['#E8F5E9', '#4CAF50', '#FFC107', '#F44336'] # Couleurs claires à fortes
+        color_discrete_sequence=['#E8F5E9', '#4CAF50', '#FFC107', '#F44336']
     )
     fig4_plotly.update_layout(height=450)
     st.plotly_chart(fig4_plotly, use_container_width=True)
 
 
-with col2_sech:
-    st.subheader("Impact du Risque sur le Prix/m² (Sécheresse)")
-    
-    # Nettoyage des outliers extrêmes pour le graphique (ylim à 1e4)
-    df_sech_filtered = df_resultat[df_resultat["valeur_fonciere_par_surface"] < 1e4]
-    
-    fig5 = plt.figure(figsize=(8, 6))
-    sns.boxplot(
-        x='zone_niveau', 
-        y='valeur_fonciere_par_surface', 
-        data=df_sech_filtered,
-        order=[0.0, 1.0, 2.0, 3.0], 
-        palette=['#4CAF50', '#FFC107', '#F44336', '#B71C1C'] # Dégradé de risque
-    )
-    plt.title('Distribution du Prix/m² par Niveau de Risque Sécheresse')
-    plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
-    plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
-    plt.tight_layout()
-    st.pyplot(fig5)
+# Le Box Plot reste en pleine largeur en dessous des deux graphiques
+st.subheader("Impact du Risque sur le Prix/m² (Sécheresse)")
+
+# Nettoyage des outliers extrêmes pour le graphique (ylim à 1e4)
+df_sech_filtered = df_resultat[df_resultat["valeur_fonciere_par_surface"] < 1e4]
+
+fig5 = plt.figure(figsize=(10, 6))
+sns.boxplot(
+    x='zone_niveau', 
+    y='valeur_fonciere_par_surface', 
+    data=df_sech_filtered,
+    order=[0.0, 1.0, 2.0, 3.0], 
+    palette=['#4CAF50', '#FFC107', '#F44336', '#B71C1C']
+)
+plt.title('Distribution du Prix/m² par Niveau de Risque Sécheresse')
+plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
+plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
+plt.tight_layout()
+st.pyplot(fig5)
