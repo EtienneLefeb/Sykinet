@@ -60,3 +60,43 @@ ax.set_axis_off() # Masquer les axes (latitude/longitude)
 
 # 4. Afficher la carte dans Streamlit
 st.pyplot(fig)
+
+
+
+
+conn = st.connection("gcs", type=FilesConnection) 
+file_path = "streamlit-sykinet/base sykinet/df_innond_complet.csv"    
+df = conn.read(file_path, input_format="csv")
+df['geometry'] = df['geometry'].apply(wkt.loads)
+gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:2154")
+
+# Assurez-vous que la colonne NIVEAU est numérique pour le coloriage
+gdf["NIVEAU"] = gdf["pct_innond_caves"] + gdf["pct_debord_nappes"] / (gdf["pct_innond_caves"] + gdf["pct_debord_nappes"] + gdf["pct_sans_risque"])
+# --- Création de la Carte avec Matplotlib et Geopandas ---
+
+# 1. Créer la figure et l'axe Matplotlib
+fig, ax = plt.subplots(1, 1, figsize=(12, 12))
+
+# 2. Tracer le GeoDataFrame
+# Nous utilisons la colonne 'NIVEAU' pour la couleur (choropleth map)
+gdf.plot(
+    column='NIVEAU', 
+    ax=ax, 
+    legend=True, # Afficher la légende
+    cmap='viridis', # Carte de couleurs, vous pouvez choisir 'Reds', 'YlOrRd', etc.
+    edgecolor='black',
+    linewidth=0.5,
+    legend_kwds={
+        'label': "Part de zone à risqsue",
+        'orientation': "horizontal",
+        'shrink': 0.6,
+        'pad': 0.01 # Réduire l'espacement
+    }
+)
+
+# 3. Personnaliser la carte
+ax.set_title("Carte des départements les plus touchés par le risque innondation)", fontsize=18)
+ax.set_axis_off() # Masquer les axes (latitude/longitude)
+
+# 4. Afficher la carte dans Streamlit
+st.pyplot(fig)
