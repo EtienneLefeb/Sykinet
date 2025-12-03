@@ -48,7 +48,7 @@ with col1_inond:
     counts = df_resultat_innond_final['Risque_innond'].value_counts()
     
     # Création d'un graphique à barres plus propre avec Streamlit/Matplotlib
-    fig = plt.figure(figsize=(8,4))
+    fig = plt.figure(figsize=(10,6))
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107']) # Couleurs claires
     plt.xlabel("Type de Risque d'inondation")
     plt.ylabel("Nombre de transactions")
