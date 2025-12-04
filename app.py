@@ -19,9 +19,9 @@ st.info("Notre problématique est la recherche d'un lien entre les bâtiments r�
 st.header("Sommaire")
 st.markdown("""
 - **Analyse des données climatiques :** Visualisation des risques d'inondation (débordements de nappe, inondations de cave) et de sécheresse.
+- **Cartes Interactives :** Pour chaque département, nous pouvons visualiser leur situation en terme de risques d'inondation et de sécheresse.
 - **Analyse des données de valeurs foncière :** Analyse des données sur la France entière.
 - **Mise en relation des données d'inondation et de sécheresse avec les valeurs foncières :** recherche d'un lien quantitatif entre les données.            
-- **Cartes Interactives :** Pour chaque département, nous pouvons visualiser leur situation en terme de risques d'inondation et de sécheresse.
 """)
 
 st.markdown("---")
