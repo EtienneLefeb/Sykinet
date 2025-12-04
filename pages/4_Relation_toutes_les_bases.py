@@ -46,6 +46,17 @@ st.markdown("---")
 # Chargement des données d'inondation
 df_resultat_innond_final = conn.read(path + "base_innond_final.csv", input_format="csv")
 
+# --- CORRECTION DES DONNÉES EN AMONT ---
+# Mappage pour créer la nouvelle colonne avec des noms courts
+MAPPING_LABELS_INOND = {
+    "Pas de débordement de nappe ni d'inondation de cave": 'Pas de Risque',
+    "Zones potentiellement sujettes aux inondations de cave": 'Risque Caves',
+    "Zones potentiellement sujettes aux débordements de nappe": 'Risque Nappes'
+}
+
+# Création de la colonne courte pour garantir la correspondance
+df_resultat_innond_final['Risque_innond_court'] = df_resultat_innond_final['Risque_innond'].map(MAPPING_LABELS_INOND)
+
 # --- Risque Inondation (Appartements) ---
 st.subheader("Risque d'Inondation : Distribution et Impact sur le Prix/m² Bâti")
 col1_inond, col2_inond = st.columns(2)
@@ -68,39 +79,24 @@ with col2_inond:
     df_plot_inond = df_resultat_innond_final.copy()
     df_plot_inond = df_plot_inond[(df_plot_inond["surface_reelle_bati"] < 400) & (df_plot_inond["valeur_fonciere"] < 1e6)]
     
-    # --- Dictionnaire de Raccourcissement pour la Légende ---
-    # Nous définissons la correspondance entre la valeur longue (clé) et le texte court (valeur)
-    MAPPING_LABELS_INOND = {
-        "Pas de débordement de nappe ni d'inondation de cave": 'Pas de Risque',
-        "Zones potentiellement sujettes aux inondations de cave": 'Risque Caves',
-        "Zones potentiellement sujettes aux débordements de nappe": 'Risque Nappes'
-    }
-
-    # 1. Création du graphique avec les COULEURS correcte (clés longues)
+    # Utilisation de la nouvelle colonne courte pour Plotly
     fig2_plotly = px.scatter(
         df_plot_inond,
         x="surface_reelle_bati",
         y="valeur_fonciere",
-        color="Risque_innond",
-        hover_name="Risque_innond",
+        color="Risque_innond_court", # Utilisation du nom court
+        hover_name="Risque_innond_court", # Utilisation du nom court
         title="Valeur Foncière par Surface selon le Risque",
-        # Le color_discrete_map DOIT utiliser les CLÉS LONGUES pour correspondre aux données
+        # Utilisation des clés courtes pour Plotly
         color_discrete_map={
-            "Pas de débordement de nappe ni d'inondation de cave": '#4CAF50',
-            "Zones potentiellement sujettes aux inondations de cave": '#2196F3',
-            "Zones potentiellement sujettes aux débordements de nappe": '#FFC107'
+            'Pas de Risque': '#4CAF50', 
+            'Risque Caves': '#2196F3', 
+            'Risque Nappes': '#FFC107' 
         }
     )
-
-    # 2. Utiliser for_each_trace pour remplacer le nom de la légende
-    for trace in fig2_plotly.data:
-        # trace.name correspond au nom dans la légende, qui est la valeur du champ 'Risque_innond'
-        original_label = trace.name
-        new_label = MAPPING_LABELS_INOND.get(original_label, original_label)
-        trace.name = new_label
-
     fig2_plotly.update_layout(height=400)
     st.plotly_chart(fig2_plotly, use_container_width=True)
+
 
 st.markdown("##### Box Plot : Prix au $m^2$ Bâti en fonction du Risque d'Inondation")
 df_resultat_innond_final["valeur_fonciere_par_surface"] = df_resultat_innond_final['valeur_fonciere']/df_resultat_innond_final['surface_reelle_bati']
