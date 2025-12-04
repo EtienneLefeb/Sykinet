@@ -6,6 +6,7 @@ from st_files_connection import FilesConnection  # Import nécessaire pour la co
 import matplotlib.pyplot as plt
 import numpy as np
 from io import StringIO
+import seaborn as sns # Ajouté pour l'harmonisation de l'analyse des Maisons
 
 # IMPORTANT:
 # Cette version utilise la connexion GCS (st_files_connection) pour charger les données réelles.
@@ -47,7 +48,6 @@ def create_risk_map(gdf_data, title, cmap_color='viridis'):
     Crée et affiche une carte choroplèthe Matplotlib à partir d'un GeoDataFrame.
     """
     # 1. Créer la figure et l'axe Matplotlib
-    # Réduction de la taille de la figure de (10, 8) à (8, 6)
     fig, ax = plt.subplots(1, 1, figsize=(8, 6)) 
 
     # 2. Tracer le GeoDataFrame
@@ -80,7 +80,7 @@ def create_risk_map(gdf_data, title, cmap_color='viridis'):
     # 4. Afficher la carte
     st.pyplot(fig)
 
-# --- NOUVELLE Fonction de Création d'Histogramme Modulaire ---
+# --- Fonction de Création d'Histogramme Modulaire ---
 
 def create_risk_histogram(gdf_data, title, color='skyblue'):
     """
@@ -90,7 +90,6 @@ def create_risk_histogram(gdf_data, title, color='skyblue'):
     fig, ax = plt.subplots(1, 1, figsize=(8, 5)) 
 
     # Tracer l'histogramme
-    # 15 bins entre 0 et 1 pour une granularité correcte des pourcentages
     ax.hist(gdf_data['NIVEAU'].dropna(), bins=15, range=(0, 1), edgecolor='black', color=color, alpha=0.7)
 
     # Personnaliser le graphique
@@ -137,7 +136,7 @@ gdf_innondation = load_real_data(INNONDATION_FILE_PATH, "innondation")
 
 
 # ***************************************************************
-# 2. Organisation du Contenu avec des Onglets
+# 2. Organisation du Contenu avec des Onglets et Analyse Condensée
 # ***************************************************************
 
 tab1, tab2 = st.tabs(["🔥 Risque Sécheresse (RGA)", "💧 Risque Inondation (Nappes/Caves)"])
@@ -153,21 +152,33 @@ with tab1:
 
     with col_map:
         st.subheader("Distribution Géographique du Risque")
-        # Utilisation de la fonction modulaire pour la carte
         create_risk_map(
             gdf_rga, 
             "Carte des départements les plus touchés par le risque RGA",
-            cmap_color='YlOrRd' # Utiliser des couleurs chaudes pour la sécheresse
+            cmap_color='YlOrRd'
         )
 
     with col_hist:
         st.subheader("Répartition du Niveau de Risque (Histogramme)")
-        # Utilisation de la nouvelle fonction pour l'histogramme
         create_risk_histogram(
             gdf_rga, 
             "Distribution des Niveaux de Risque RGA par Département",
             color='orange'
         )
+        
+    st.markdown("#### 🔍 Synthèse des Observations (RGA)")
+    st.info("""
+    **Cohérence Géologique :** La carte choroplèthe montre une forte adéquation avec les réalités géologiques, mettant en lumière l'hétérogénéité territoriale du risque RGA.
+    
+    * **Zones à Risque Élevé :** Principalement concentrées dans le Sud-Ouest (Gers, Lot-et-Garonne, Tarn-et-Garonne) et le Centre (Indre-et-Loire, Cher).
+    * **Zones à Risque Faible :** Majoritairement les zones côtières et montagneuses (Bretagne, Alpes, Massif Central).
+
+    **Analyse de l'Histogramme :**
+    * La distribution n'est pas uniforme, confirmant le contraste entre régions.
+    * Une **majorité des départements** se situe dans des niveaux moyens de risque (proportion de zones à risque entre **0.2 et 0.7**).
+
+    **Conclusion Actuarielle :** Ces visualisations sont essentielles pour l'évaluation du risque et la tarification des assurances, car elles permettent de cibler précisément les zones d'actions de prévention et de rénovation.
+    """)
 
 
 with tab2:
@@ -180,19 +191,31 @@ with tab2:
     
     with col_map:
         st.subheader("Distribution Géographique du Risque")
-        # Utilisation de la fonction modulaire pour la carte
         create_risk_map(
             gdf_innondation, 
             "Carte des départements les plus touchés par le risque inondation",
-            cmap_color='Blues' # Utiliser des couleurs froides pour l'eau/inondation
+            cmap_color='Blues'
         )
 
     with col_hist:
         st.subheader("Répartition du Niveau de Risque (Histogramme)")
-        # Utilisation de la nouvelle fonction pour l'histogramme
         create_risk_histogram(
             gdf_innondation, 
             "Distribution des Niveaux de Risque Inondation par Département",
             color='blue'
         )
+        
+    st.markdown("#### 🔍 Synthèse des Observations (Inondation)")
+    st.info("""
+    **Hétérogénéité Spatiale :** La carte met en évidence une forte hétérogénéité spatiale du risque d’inondation en France.
+    
+    * **Zones Fortement Exposées :** La région **Centre–Val de Loire**, certains départements des Hauts-de-France et le Sud-Ouest. Le département des **Bouches-du-Rhône** ressort comme particulièrement vulnérable (confirmant les épisodes récents autour de Marseille).
+    * **Zones Faiblement Exposées :** Des régions comme **Auvergne–Rhône-Alpes** et les zones montagneuses, où la géomorphologie est moins favorable aux débordements.
 
+    **Analyse de l'Histogramme :**
+    * La majorité des départements se concentre autour de niveaux intermédiaires, entre **20 % et 40 %** de zones à risque.
+    * Un nombre important de départements présente une exposition inférieure à 20 % (zones claires de la carte).
+    * Quelques départements dépassent **50 %**, constituant des zones extrêmes essentielles pour la gestion du risque maximal.
+
+    **Conclusion Actuarielle :** Ces résultats permettent d'identifier précisément les localisations les plus vulnérables pour l'ajustement des primes d'assurance, la tarification et le renforcement des modèles de risque.
+    """)
