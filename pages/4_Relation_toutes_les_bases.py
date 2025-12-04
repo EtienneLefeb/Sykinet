@@ -63,7 +63,7 @@ col1_inond, col2_inond = st.columns(2)
 
 with col1_inond:
     st.markdown("##### Répartition des Types de Risques d'Inondation")
-    counts = df_resultat_innond_final['Risque_innond'].value_counts()
+    counts = df_resultat_innond_final['Risque_innond_court'].value_counts()
     
     fig = plt.figure(figsize=(12,6))
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107'])
@@ -105,7 +105,7 @@ df_innond_filtered = df_innond_filtered[df_innond_filtered["valeur_fonciere_par_
 
 fig3 = plt.figure(figsize=(10, 6))
 sns.boxplot(
-    x='Risque_innond', 
+    x='Risque_innond_court', 
     y='valeur_fonciere_par_surface', 
     data=df_innond_filtered,
     palette=['#4CAF50', '#2196F3', '#FFC107']
@@ -133,7 +133,7 @@ with col1_sech_dist:
     fig_sech_dist = plt.figure(figsize=(6,4))
     secheresse_counts.plot(
         kind='bar', 
-        color=['#4CAF50', '#FFC107', '#F44336', '#B71C1C']
+        color=['#E8F5E9','#4CAF50', '#FFC107', '#F44336']
     )
     plt.xlabel("Niveau de Risque Sécheresse")
     plt.ylabel("Nombre de transactions")
@@ -173,7 +173,7 @@ sns.boxplot(
     y='valeur_fonciere_par_surface', 
     data=df_sech_filtered,
     order=[0.0, 1.0, 2.0, 3.0], 
-    palette=['#4CAF50', '#FFC107', '#F44336', '#B71C1C']
+    palette=['#E8F5E9','#4CAF50', '#FFC107', '#F44336']
 )
 plt.title('Distribution du Prix/m² Bâti par Niveau de Risque Sécheresse (Appartements)')
 plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
@@ -194,13 +194,14 @@ st.subheader("Risque d'Inondation : Distribution et Impact sur le Prix/m² Terra
 
 df_resultat_innond_maison_final = conn.read(path + "base_innond_final_maison.csv", input_format="csv")
 df_resultat_innond_maison_final["valeur_fonciere_par_surface"] = df_resultat_innond_maison_final['valeur_fonciere']/df_resultat_innond_maison_final['surface_terrain']
+df_resultat_innond_maison_final['Risque_innond_court'] = df_resultat_innond_maison_final['Risque_innond'].map(MAPPING_LABELS_INOND)
 
 
 col1_maison_inond_dist, col2_maison_inond_box = st.columns(2)
 
 with col1_maison_inond_dist:
     st.markdown("##### Répartition des Types de Risques d'Inondation (Maisons)")
-    counts_maison_inond = df_resultat_innond_maison_final['Risque_innond'].value_counts()
+    counts_maison_inond = df_resultat_innond_maison_final['Risque_innond_court'].value_counts()
 
     fig7 = plt.figure(figsize=(10,6))
     counts_maison_inond.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107'])
@@ -216,7 +217,7 @@ with col2_maison_inond_box:
 
     fig8 = plt.figure(figsize=(10, 6))
     sns.boxplot(
-        x='Risque_innond', 
+        x='Risque_innond_court', 
         y='valeur_fonciere_par_surface', 
         data=df_maison_inond_filtered,
         palette=['#4CAF50', '#2196F3', '#FFC107']
@@ -245,7 +246,7 @@ with col1_maison_sech_dist:
     fig_sech_maison_dist = plt.figure(figsize=(6,4))
     secheresse_counts_maison.plot(
         kind='bar', 
-        color=['#4CAF50', '#FFC107', '#F44336', '#B71C1C']
+        color=['#E8F5E9','#4CAF50', '#FFC107', '#F44336']
     )
     plt.xlabel("Niveau de Risque Sécheresse")
     plt.ylabel("Nombre de transactions")
@@ -266,7 +267,7 @@ with col2_maison_sech_box:
         y='valeur_fonciere_par_surf', 
         data=df_maison_sech_filtered,
         order=[0.0, 1.0, 2.0, 3.0], 
-        palette=['#4CAF50', '#FFC107', '#F44336', '#B71C1C']
+        palette=['#E8F5E9','#4CAF50', '#FFC107', '#F44336']
     )
     plt.title('Distribution du Prix/m² Terrain par Niveau de Risque Sécheresse (Maisons)')
     plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
