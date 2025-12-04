@@ -5,9 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import plotly.express as px
-# Note: geopandas et shapely ne sont pas utilisés dans ce code, mais gardés pour l'exhaustivité
-# import geopandas as gpd
-# from shapely import wkt
 
 # --- 1. CONFIGURATION DE PAGE ---
 st.set_page_config(
@@ -27,20 +24,30 @@ path = "streamlit-sykinet/base sykinet/"
 conn = st.connection("gcs", type=FilesConnection)
 
 # --- 3. CHARGEMENT DES DONNÉES ---
-df_doublons = conn.read(path + "df_doublons.csv", input_format="csv")
+df_doublons_raw = conn.read(path + "df_doublons.csv", input_format="csv")
 diff_locaux = conn.read(path + "differents_locaux.csv", input_format="csv")
 nature_mutations = conn.read(path + "nature_mutation.csv", input_format="csv")
 
 
-# --- 4. RENOMMER ET VÉRIFIER LES COLONNES (Hypothèse: Colonnes 0 et 1) ---
-# Si vos DataFrames n'ont pas d'en-tête, le nom par défaut sera 0 et 1. 
-# Si vos DataFrames ont des noms, remplacez 0 et 1 par les noms réels.
+# --- 4. PRÉPARATION ET TRANSFORMATION DES DONNÉES ---
 
-# Doublons
-df_doublons.columns = ['Statut', 'Nombre_Transactions']
-# Locaux
+# 4a. TRANSFORMATION DE df_doublons (Structure: Colonnes = Catégories)
+# 1. Transposer le DataFrame (les colonnes deviennent des lignes)
+# 2. Réinitialiser l'index pour que les anciens noms de colonnes deviennent une nouvelle colonne
+# 3. Renommer les colonnes
+if df_doublons_raw.shape[0] == 1:
+    df_doublons = df_doublons_raw.T.reset_index()
+    # On suppose que la première ligne de l'index transposé est l'ancienne tête de colonne
+    df_doublons.columns = ['Statut', 'Nombre_Transactions']
+else:
+    # Cas de secours si le format n'est pas celui attendu (e.g., une ligne)
+    st.warning("Le format de 'df_doublons' n'est pas une seule ligne avec des catégories en colonnes. Utilisation du format simple à deux colonnes.")
+    df_doublons = df_doublons_raw.copy()
+    df_doublons.columns = ['Statut', 'Nombre_Transactions']
+
+
+# 4b. RENOMMAGE pour diff_locaux et nature_mutations (Structure: 2 colonnes)
 diff_locaux.columns = ['Type_Local', 'Nombre_Transactions']
-# Mutations
 nature_mutations.columns = ['Nature_Mutation', 'Nombre_Transactions']
 
 
@@ -52,7 +59,7 @@ st.markdown("---")
 
 col_d, col_l, col_m = st.columns(3)
 
-# Graphique 1 : Doublons
+# Graphique 1 : Doublons (Utilisation du DataFrame transformé)
 with col_d:
     st.subheader("Répartition des Doublons")
     try:
@@ -62,11 +69,10 @@ with col_d:
             names='Statut', 
             title='Statut des Observations'
         )
-        # Affichage du pourcentage et de l'étiquette à l'intérieur du camembert
         fig_doublons.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig_doublons, use_container_width=True)
     except Exception as e:
-        st.error(f"Erreur lors de la création du graphique Doublons. Vérifiez les noms de colonnes. Erreur: {e}")
+        st.error(f"Erreur lors de la création du graphique Doublons. Vérifiez la structure post-transposition. Erreur: {e}")
 
 
 # Graphique 2 : Locaux
