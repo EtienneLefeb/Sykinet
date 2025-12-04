@@ -27,8 +27,9 @@ Cette application analyse l'impact des **risques d'inondation** et de **séchere
 # Utilisation d'un expander pour cacher le texte d'introduction si nécessaire
 with st.expander("Détails de la méthodologie"):
     st.markdown("""
-    La base de données des valeurs foncières a été réduite aux ventes d'appartements et limitée aux régions de Nouvelle Aquitaine, d'Occitanie et de Centre-Val de Loire, où les risques sécheresse et inondations sont avérés.
-    """)
+    La base de données des valeurs foncières des appartements a été réduite aux ventes et limitée aux régions de Nouvelle Aquitaine, d'Occitanie et de Centre-Val de Loire, où les risques sécheresse et inondations sont avérés. Comme le prix ne réfère qu'à l'appartement, nous avons utilisé comme unité de mesure le prix par mètre carré
+                
+    La base de données des valeurs foncières des maisons a été difficile a traité compte tenu que nous avons uniquement le prix du bâtiment et de la surface totale réunie. Pour pouvoir faire des comparaisons, nous avons sélectionné des maisons aux caractéristiques similaires (surface du terrain entre 300 et 400 mètres carrés et surface du batiment entre 80 et 105 mètres carrrés). Nous avons ensuite choisi comme unité de mesure le prix par mètre de surface de terrain.    """)
 
 path = "streamlit-sykinet/base sykinet/"
 conn = st.connection("gcs", type=FilesConnection)
@@ -184,3 +185,57 @@ plt.xlabel('Niveau de Risque Sécheresse (0.0: Très Faible, 3.0: Très Fort)')
 plt.ylabel('Prix au m² (Valeur Foncière / Surface Bâtie)')
 plt.tight_layout()
 st.pyplot(fig5)
+
+## Comparaison avec le dataset maison
+
+df_resultat_innond_maison_final = conn.read(path + "base_innond_final_maison.csv", input_format="csv")
+
+counts = df_resultat_innond_maison_final['Risque_innond'].value_counts()
+
+# Création du graphique
+fig7=plt.figure(figsize=(6,4))
+counts.plot(kind='bar')
+
+plt.xlabel("Risque d'inondation")
+plt.ylabel("Nombre de cas")
+plt.title("Répartition des modalités de Risque_innond")
+plt.tight_layout()
+plt.show()
+
+st.pyplot(fig7)
+
+df_resultat_innond_maison_final["valeur_fonciere_par_surface"] = df_resultat_innond_maison_final['valeur_fonciere']/df_resultat_innond_maison_final['surface_terrain']
+
+
+fig8 = plt.figure(figsize=(20, 6))
+# Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
+sns.boxplot(
+    x='Risque_innond', 
+    y='valeur_fonciere_par_surface', 
+    data=df_resultat_innond_maison_final,
+#    order=[0.0, 1.0, 2.0] # Assure l'ordre correct des niveaux
+)
+plt.title('Distribution de la Valeur Foncière par Zone Niveau (Box Plot)')
+plt.xlabel('Zone Niveau (Ordinal)')
+plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
+plt.ylim([0,1.4e3])
+st.pyplot(fig8)
+
+
+
+
+df_resultat_maison = conn.read(path + "base_sech_final.csv", input_format="csv") 
+df_resultat_maison["valeur_fonciere_par_surf"] = df_resultat_maison["valeur_fonciere"] / df_resultat_maison["surface_terrain"]
+fig6 = plt.figure(figsize=(10, 6))
+# Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
+sns.boxplot(
+    x='zone_niveau', 
+    y='valeur_fonciere_par_surf', 
+    data=df_resultat_maison,
+    order=[0.0, 1.0, 2.0, 3.0] # Assure l'ordre correct des niveaux
+)
+plt.title('Distribution de la Valeur Foncière par Zone Niveau (Box Plot)')
+plt.xlabel('Zone Niveau (Ordinal)')
+plt.ylabel('Valeur Foncière par unité de surface (Quantitative)')
+plt.ylim([0,1.5e3])
+st.pyplot(fig6)
