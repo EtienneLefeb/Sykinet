@@ -68,6 +68,15 @@ with col2_inond:
     df_plot_inond = df_resultat_innond_final.copy()
     df_plot_inond = df_plot_inond[(df_plot_inond["surface_reelle_bati"] < 400) & (df_plot_inond["valeur_fonciere"] < 1e6)]
     
+    # --- Dictionnaire de Raccourcissement pour la Légende ---
+    # Nous définissons la correspondance entre la valeur longue (clé) et le texte court (valeur)
+    MAPPING_LABELS_INOND = {
+        "Pas de débordement de nappe ni d'inondation de cave": 'Pas de Risque',
+        "Zones potentiellement sujettes aux inondations de cave": 'Risque Caves',
+        "Zones potentiellement sujettes aux débordements de nappe": 'Risque Nappes'
+    }
+
+    # 1. Création du graphique avec les COULEURS correcte (clés longues)
     fig2_plotly = px.scatter(
         df_plot_inond,
         x="surface_reelle_bati",
@@ -75,15 +84,23 @@ with col2_inond:
         color="Risque_innond",
         hover_name="Risque_innond",
         title="Valeur Foncière par Surface selon le Risque",
+        # Le color_discrete_map DOIT utiliser les CLÉS LONGUES pour correspondre aux données
         color_discrete_map={
-            "Pas de risques": '#4CAF50',
-            "Inondations de cave": '#2196F3',
-            "Débordements de nappe": '#FFC107'
+            "Pas de débordement de nappe ni d'inondation de cave": '#4CAF50',
+            "Zones potentiellement sujettes aux inondations de cave": '#2196F3',
+            "Zones potentiellement sujettes aux débordements de nappe": '#FFC107'
         }
     )
+
+    # 2. Utiliser for_each_trace pour remplacer le nom de la légende
+    for trace in fig2_plotly.data:
+        # trace.name correspond au nom dans la légende, qui est la valeur du champ 'Risque_innond'
+        original_label = trace.name
+        new_label = MAPPING_LABELS_INOND.get(original_label, original_label)
+        trace.name = new_label
+
     fig2_plotly.update_layout(height=400)
     st.plotly_chart(fig2_plotly, use_container_width=True)
-
 
 st.markdown("##### Box Plot : Prix au $m^2$ Bâti en fonction du Risque d'Inondation")
 df_resultat_innond_final["valeur_fonciere_par_surface"] = df_resultat_innond_final['valeur_fonciere']/df_resultat_innond_final['surface_reelle_bati']
