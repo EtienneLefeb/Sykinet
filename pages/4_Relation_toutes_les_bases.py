@@ -76,9 +76,9 @@ with col2_inond:
         hover_name="Risque_innond",
         title="Valeur Foncière par Surface selon le Risque",
         color_discrete_map={
-            "Pas de débordement de nappe ni d'inondation de cave": '#4CAF50',
-            "Zones potentiellement sujettes aux inondations de cave": '#2196F3',
-            "Zones potentiellement sujettes aux débordements de nappe": '#FFC107'
+            "Pas de risques": '#4CAF50',
+            "Inondations de cave": '#2196F3',
+            "Débordements de nappe": '#FFC107'
         }
     )
     fig2_plotly.update_layout(height=400)
