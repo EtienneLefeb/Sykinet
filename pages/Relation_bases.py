@@ -224,7 +224,7 @@ st.pyplot(fig8)
 
 
 
-df_resultat_maison = conn.read(path + "base_sech_final.csv", input_format="csv") 
+df_resultat_maison = conn.read(path + "base_sech_final_maison.csv", input_format="csv") 
 df_resultat_maison["valeur_fonciere_par_surf"] = df_resultat_maison["valeur_fonciere"] / df_resultat_maison["surface_terrain"]
 fig6 = plt.figure(figsize=(10, 6))
 # Le Box Plot affiche la médiane, les quartiles et les valeurs aberrantes
