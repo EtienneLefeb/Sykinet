@@ -196,5 +196,3 @@ with tab2:
             color='blue'
         )
 
-st.sidebar.markdown("## Paramètres de Visualisation")
-st.sidebar.markdown("Pour l'instant, les cartes et histogrammes affichent la vue globale. Des filtres par période ou intensité pourront être ajoutés ici.")
