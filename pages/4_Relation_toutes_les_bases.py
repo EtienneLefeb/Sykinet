@@ -1,13 +1,9 @@
 import streamlit as st
-import geopandas as gpd
 import pandas as pd
-from shapely import wkt
-# Import nécessaire pour la connexion GCS (Gardé)
 from st_files_connection import FilesConnection 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-# On ajoute Plotly pour des graphiques interactifs (Recommandé)
 import plotly.express as px
 
 # --- 1. CONFIGURATION DE PAGE ---
@@ -47,14 +43,12 @@ st.markdown("---")
 df_resultat_innond_final = conn.read(path + "base_innond_final.csv", input_format="csv")
 
 # --- CORRECTION DES DONNÉES EN AMONT ---
-# Mappage pour créer la nouvelle colonne avec des noms courts
 MAPPING_LABELS_INOND = {
     "Pas de débordement de nappe ni d'inondation de cave": 'Pas de Risque',
     "Zones potentiellement sujettes aux inondations de cave": 'Risque Caves',
     "Zones potentiellement sujettes aux débordements de nappe": 'Risque Nappes'
 }
 
-# Création de la colonne courte pour garantir la correspondance
 df_resultat_innond_final['Risque_innond_court'] = df_resultat_innond_final['Risque_innond'].map(MAPPING_LABELS_INOND)
 
 # --- Risque Inondation (Appartements) ---
@@ -69,7 +63,6 @@ with col1_inond:
     counts.plot(kind='bar', color=['#2196F3', '#4CAF50', '#FFC107'])
     plt.xlabel("Type de Risque d'inondation")
     plt.ylabel("Nombre de transactions")
-    # Rotation des labels pour la lisibilité
     plt.xticks(rotation=45, ha='right') 
     plt.tight_layout()
     st.pyplot(fig)
@@ -79,15 +72,13 @@ with col2_inond:
     df_plot_inond = df_resultat_innond_final.copy()
     df_plot_inond = df_plot_inond[(df_plot_inond["surface_reelle_bati"] < 400) & (df_plot_inond["valeur_fonciere"] < 1e6)]
     
-    # Utilisation de la nouvelle colonne courte pour Plotly
     fig2_plotly = px.scatter(
         df_plot_inond,
         x="surface_reelle_bati",
         y="valeur_fonciere",
-        color="Risque_innond_court", # Utilisation du nom court
-        hover_name="Risque_innond_court", # Utilisation du nom court
+        color="Risque_innond_court", 
+        hover_name="Risque_innond_court", 
         title="Valeur Foncière par Surface selon le Risque",
-        # Utilisation des clés courtes pour Plotly
         color_discrete_map={
             'Pas de Risque': '#4CAF50', 
             'Risque Caves': '#2196F3', 
@@ -275,3 +266,36 @@ with col2_maison_sech_box:
     plt.xticks(rotation=0)
     plt.tight_layout()
     st.pyplot(fig6)
+
+
+# ==============================================================================
+# SECTION D'ANALYSE (Nouvelle structure)
+# ==============================================================================
+st.divider()
+st.header("Conclusions et Interprétation des Résultats 🧠")
+
+# Utilisation d'un st.expander pour encapsuler l'analyse détaillée
+with st.expander("Analyse Détaillée de l'Impact des Risques sur les Prix (Prix/m²)"):
+    st.markdown("""
+    ### 1. Corrélation Initiale et Hypothèse de Localisation
+
+    * Il est initialement observé que la **surface des bâtiments est directement corrélée avec la valeur foncière**. Cependant, l'analyse plus fine des prix par unité de surface révèle des tendances qui suggèrent que la **localisation** est un facteur dominant qui masque ou amplifie l'effet du risque.
+
+    ### 2. Tendances pour les Appartements (Prix/m² Bâti)
+
+    * **Péril Inondation :**
+        * En moyenne, les surfaces **"Pas de Risque"** d'inondation ont des valeurs foncières plus **basses** (médianes des Box Plots) que celles basées sur les zones à **"Risque Caves"**.
+        * **Interprétation :** Ces résultats suggèrent qu'il y a soit un **effet de hausse de prix** lié à la zone risquée (peu probable), ou, plus vraisemblablement, que les **habitations les plus chères** (pour d'autres raisons comme l'hyper-centralité ou la qualité des biens) sont situées dans des zones qui ne sont **pas susceptibles d'être inondées** (zone "Pas de Risque" = zones de haute valeur, non-inondables).
+
+    * **Péril Sécheresse (RGA) :**
+        * En moyenne, les surfaces qui ne sont **pas exposées au risque RGA (Niveau 0.0)** ont des valeurs foncières plus **basses** que celles situées dans des zones très risquées (Niveau 3.0).
+        * **Conclusion :** Cette observation vient **sûrement de la deuxième interprétation ci-dessus** : l'effet de localisation (les quartiers chers sont souvent situés dans des zones géologiquement stables) domine la décote potentielle du risque.
+
+    ### 3. Tendances pour les Maisons (Prix/m² Terrain)
+
+    * **Péril Inondation :** Nous retrouvons, en moyenne, les mêmes conclusions que pour les appartements : l'effet de la localisation est prépondérant.
+
+    * **Péril Sécheresse (RGA) :**
+        * La **hausse de prix moyenne du foncier est moins marquée** dans les zones à haut risque RGA pour les maisons que pour les appartements.
+        * **Hypothèse :** Les maisons étant plus sensibles aux risques RGA que les appartements, la **diminution du prix causée par la localisation dans une zone sensible à la sécheresse compense** la hausse du prix liée à la localisation dans un endroit où le prix du foncier est naturellement plus élevé. C'est ici que l'effet de décote du risque RGA, même faible, pourrait être visible.
+    """)
