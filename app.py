@@ -14,7 +14,7 @@ st.set_page_config(
 st.title("🏡 Bienvenue sur notre page de visualisation de données Sykinet")
 st.markdown("---")
 
-st.info("Notre problématique est la recherche d'un lien entre les bâtiments résidentiels (maisons et appartements) et les risques de sécheresse et d'inondation sur leur terrain.")
+st.info("Notre problématique est la recherche d'un lien entre le prix des bâtiments résidentiels (maisons et appartements) et les risques de sécheresse et d'inondation sur leur terrain.")
 
 st.header("Sommaire")
 st.markdown("""
