@@ -37,4 +37,4 @@ Utilisez la barre latérale pour naviguer entre les pages de l'application.
 # Un message d'aide simple dans la barre latérale
 with st.sidebar:
     st.header("Auteurs")
-    st.success("Les auteurs sont : Sylviane ANDRIAMANANA, Kindak DIKONGUE, Etienne LEFEBVRE")
+    st.success("Les auteurs sont : Sylviane ANDRIARIMANANA, Kindak DIKONGUE, Etienne LEFEBVRE")
